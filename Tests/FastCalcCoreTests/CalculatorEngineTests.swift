@@ -186,4 +186,45 @@ struct CalculatorEngineTests {
         #expect(engine.snapshot().roll.isEmpty)
         #expect(engine.snapshot().totalizer == Decimal(0))
     }
+
+    // Regressione: catena divisione->moltiplicazione non deve perdere la parte frazionaria nel valore interno
+    @Test func chainedDivisionThenMultiplicationKeepsFractionalInternalValue() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter(".")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("/")
+        _ = engine.inputCharacter("3")
+        let first = engine.pressResult(.enter)
+
+        #expect(first.kind == .result)
+        #expect(first.value > Decimal(string: "0.7333")!)
+        #expect(first.value < Decimal(string: "0.7334")!)
+
+        _ = engine.inputCharacter("*")
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("5")
+        let second = engine.pressResult(.enter)
+
+        #expect(second.kind == .result)
+        #expect(second.value > Decimal(string: "10.999")!)
+        #expect(second.value < Decimal(11))
+    }
+
+    // Il formato roll deve restare coerente con il limite massimo di 8 decimali
+    @Test func divisionResultUsesEightFractionDigitsInRollOutput() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter(".")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("/")
+        _ = engine.inputCharacter("3")
+        _ = engine.pressResult(.enter)
+
+        let snapshot = engine.snapshot()
+        #expect(snapshot.roll.count == 1)
+        #expect(snapshot.roll[0].output == "0.73333333")
+    }
 }

@@ -24,6 +24,9 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
             },
             onOpenSettings: { [weak self] in
                 self?.openSettings()
+            },
+            onMoveToScreen: { [weak self] screenIndex in
+                self?.moveWindowToScreen(screenIndex)
             }
         )
         menuBar.install()
@@ -56,6 +59,10 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
         }
         settingsWindowController?.setPreviewSourceValue(windowController?.currentPreviewValue())
         settingsWindowController?.present()
+    }
+
+    private func moveWindowToScreen(_ screenIndex: Int) {
+        windowController?.moveWindowToScreen(screenIndex, persistPreference: true)
     }
 
     private func installMainMenu() {

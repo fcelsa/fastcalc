@@ -6,10 +6,12 @@ public final class SettingsWindowController: NSWindowController {
     private var draftSettings = FastCalcFormatSettings()
     private var previewSourceValue: Decimal?
 
-    private let decimalModePopup = NSPopUpButton(frame: .zero, pullsDown: false)
-    private let fixedDecimalsField = NSTextField(string: "2")
-    private let fixedDecimalsStepper = NSStepper(frame: .zero)
+    private let decimalsPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let roundingPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let allSpacesCheckbox = NSButton(checkboxWithTitle: "Visibile in tutti gli Spaces", target: nil, action: nil)
+    private let defaultScreenPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let defaultScreenHintLabel = NSTextField(labelWithString: "")
+    private let floatingWindowCheckbox = NSButton(checkboxWithTitle: "Floating (spostabile)", target: nil, action: nil)
     private let previewValueLabel = NSTextField(labelWithString: "")
     private let roundingEffectLabel = NSTextField(labelWithString: "")
     private let okButton = NSButton(title: "OK", target: nil, action: nil)
@@ -18,7 +20,7 @@ public final class SettingsWindowController: NSWindowController {
         self.settingsStore = settingsStore
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 440, height: 240),
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 350),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -58,40 +60,31 @@ public final class SettingsWindowController: NSWindowController {
         root.edgeInsets = NSEdgeInsets(top: 18, left: 18, bottom: 18, right: 18)
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let modeLabel = NSTextField(labelWithString: "Decimali")
-        modeLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        let decimalsLabel = NSTextField(labelWithString: "Decimali")
+        decimalsLabel.font = .systemFont(ofSize: 13, weight: .semibold)
 
-        decimalModePopup.addItems(withTitles: ["Floating (puro)", "Fissi"])
-        decimalModePopup.target = self
-        decimalModePopup.action = #selector(decimalModeChanged)
+        decimalsPopup.addItems(withTitles: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "FL"])
+        decimalsPopup.target = self
+        decimalsPopup.action = #selector(decimalsChanged)
 
-        let fixedLabel = NSTextField(labelWithString: "Numero decimali")
-        fixedLabel.font = .systemFont(ofSize: 13)
-
-        fixedDecimalsField.alignment = .right
-        fixedDecimalsField.controlSize = .small
-        fixedDecimalsField.isEditable = true
-        fixedDecimalsField.target = self
-        fixedDecimalsField.action = #selector(fixedDecimalsFieldChanged)
-        fixedDecimalsField.widthAnchor.constraint(equalToConstant: 44).isActive = true
-
-        fixedDecimalsStepper.minValue = 0
-        fixedDecimalsStepper.maxValue = 8
-        fixedDecimalsStepper.increment = 1
-        fixedDecimalsStepper.target = self
-        fixedDecimalsStepper.action = #selector(fixedDecimalsStepperChanged)
-
-        let fixedControls = NSStackView(views: [fixedDecimalsField, fixedDecimalsStepper])
-        fixedControls.orientation = .horizontal
-        fixedControls.alignment = .centerY
-        fixedControls.spacing = 8
-
-        let roundingLabel = NSTextField(labelWithString: "Arrotondamento")
+        let roundingLabel = NSTextField(labelWithString: "Arrotondamenti")
         roundingLabel.font = .systemFont(ofSize: 13, weight: .semibold)
 
         roundingPopup.addItems(withTitles: ["Difetto", "Medio", "Eccesso"])
         roundingPopup.target = self
         roundingPopup.action = #selector(roundingChanged)
+
+        allSpacesCheckbox.target = self
+        allSpacesCheckbox.action = #selector(windowBehaviorChanged)
+
+        defaultScreenPopup.target = self
+        defaultScreenPopup.action = #selector(windowBehaviorChanged)
+
+        defaultScreenHintLabel.font = .systemFont(ofSize: 11)
+        defaultScreenHintLabel.textColor = .secondaryLabelColor
+
+        floatingWindowCheckbox.target = self
+        floatingWindowCheckbox.action = #selector(windowBehaviorChanged)
 
         previewValueLabel.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
         previewValueLabel.textColor = .secondaryLabelColor
@@ -108,19 +101,37 @@ public final class SettingsWindowController: NSWindowController {
         let effectLabel = NSTextField(labelWithString: "Effetto")
         effectLabel.font = .systemFont(ofSize: 13)
 
+        let spacesLabel = NSTextField(labelWithString: "Spaces")
+        spacesLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+
+        let screenLabel = NSTextField(labelWithString: "Schermo di default")
+        screenLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+
+        let floatingLabel = NSTextField(labelWithString: "Tipo finestra")
+        floatingLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+
+        let separator = NSBox()
+        separator.boxType = .separator
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
+
         let grid = NSGridView(views: [
-            [modeLabel, decimalModePopup],
-            [fixedLabel, fixedControls],
+            [decimalsLabel, decimalsPopup],
             [roundingLabel, roundingPopup],
             [previewLabel, previewValueLabel],
-            [effectLabel, roundingEffectLabel]
+            [effectLabel, roundingEffectLabel],
+            [NSTextField(labelWithString: ""), separator],
+            [spacesLabel, allSpacesCheckbox],
+            [screenLabel, defaultScreenPopup],
+            [NSTextField(labelWithString: ""), defaultScreenHintLabel],
+            [floatingLabel, floatingWindowCheckbox]
         ])
         grid.rowSpacing = 6
         grid.columnSpacing = 14
         grid.translatesAutoresizingMaskIntoConstraints = false
         grid.column(at: 0).xPlacement = .leading
         grid.column(at: 1).xPlacement = .trailing
-        grid.row(at: 4).topPadding = 2
+        grid.row(at: 5).topPadding = 2
 
         let spacer = NSView(frame: .zero)
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -153,20 +164,17 @@ public final class SettingsWindowController: NSWindowController {
     private func loadFromSettings() {
         draftSettings = settingsStore.loadFormattingSettings()
         applyDraftToUI()
-        updateFixedDecimalsEnabledState()
         updatePreview()
     }
 
     private func applyDraftToUI() {
         switch draftSettings.decimalMode {
         case .floating:
-            decimalModePopup.selectItem(at: 0)
+            decimalsPopup.selectItem(withTitle: "FL")
         case .fixed:
-            decimalModePopup.selectItem(at: 1)
+            let clampedPlaces = max(0, min(8, draftSettings.fixedDecimalPlaces))
+            decimalsPopup.selectItem(withTitle: String(clampedPlaces))
         }
-
-        fixedDecimalsField.stringValue = String(draftSettings.fixedDecimalPlaces)
-        fixedDecimalsStepper.integerValue = draftSettings.fixedDecimalPlaces
 
         switch draftSettings.roundingMode {
         case .down:
@@ -176,14 +184,22 @@ public final class SettingsWindowController: NSWindowController {
         case .up:
             roundingPopup.selectItem(at: 2)
         }
+
+        allSpacesCheckbox.state = draftSettings.showOnAllSpaces ? .on : .off
+        floatingWindowCheckbox.state = draftSettings.floatingWindowEnabled ? .on : .off
+
+        reloadScreenChoices()
     }
 
     private func updateDraftFromUI() {
-        draftSettings.decimalMode = decimalModePopup.indexOfSelectedItem == 1 ? .fixed : .floating
-
-        let fixedPlaces = max(0, min(8, fixedDecimalsStepper.integerValue))
-        draftSettings.fixedDecimalPlaces = fixedPlaces
-        fixedDecimalsField.stringValue = String(fixedPlaces)
+        if decimalsPopup.titleOfSelectedItem == "FL" {
+            draftSettings.decimalMode = .floating
+            draftSettings.fixedDecimalPlaces = 2
+        } else {
+            draftSettings.decimalMode = .fixed
+            let fixedPlaces = Int(decimalsPopup.titleOfSelectedItem ?? "2") ?? 2
+            draftSettings.fixedDecimalPlaces = max(0, min(8, fixedPlaces))
+        }
 
         switch roundingPopup.indexOfSelectedItem {
         case 0:
@@ -192,6 +208,38 @@ public final class SettingsWindowController: NSWindowController {
             draftSettings.roundingMode = .up
         default:
             draftSettings.roundingMode = .nearest
+        }
+
+        draftSettings.showOnAllSpaces = allSpacesCheckbox.state == .on
+        draftSettings.floatingWindowEnabled = floatingWindowCheckbox.state == .on
+
+        if defaultScreenPopup.isEnabled {
+            draftSettings.preferredScreenIndex = max(0, defaultScreenPopup.indexOfSelectedItem)
+        } else {
+            draftSettings.preferredScreenIndex = nil
+        }
+    }
+
+    private func reloadScreenChoices() {
+        let screens = NSScreen.screens
+        defaultScreenPopup.removeAllItems()
+
+        for index in screens.indices {
+            defaultScreenPopup.addItem(withTitle: "Schermo \(index + 1)")
+        }
+
+        if screens.count <= 1 {
+            if defaultScreenPopup.numberOfItems == 0 {
+                defaultScreenPopup.addItem(withTitle: "Schermo 1")
+            }
+            defaultScreenPopup.selectItem(at: 0)
+            defaultScreenPopup.isEnabled = false
+            defaultScreenHintLabel.stringValue = "Opzione attiva solo con piu schermi collegati."
+        } else {
+            defaultScreenPopup.isEnabled = true
+            let preferredIndex = min(max(0, draftSettings.preferredScreenIndex ?? 0), screens.count - 1)
+            defaultScreenPopup.selectItem(at: preferredIndex)
+            defaultScreenHintLabel.stringValue = "Usato per apertura e riposizionamento finestra."
         }
     }
 
@@ -230,33 +278,8 @@ public final class SettingsWindowController: NSWindowController {
         roundingEffectLabel.stringValue = "D \(marked(downValue, for: .down))  M \(marked(nearestValue, for: .nearest))  E \(marked(upValue, for: .up))"
     }
 
-    private func updateFixedDecimalsEnabledState() {
-        let isFixed = decimalModePopup.indexOfSelectedItem == 1
-        fixedDecimalsField.isEnabled = isFixed
-        fixedDecimalsStepper.isEnabled = isFixed
-        fixedDecimalsField.textColor = isFixed ? .labelColor : .secondaryLabelColor
-    }
-
     @objc
-    private func decimalModeChanged() {
-        updateFixedDecimalsEnabledState()
-        updateDraftFromUI()
-        updatePreview()
-    }
-
-    @objc
-    private func fixedDecimalsStepperChanged() {
-        fixedDecimalsField.stringValue = String(fixedDecimalsStepper.integerValue)
-        updateDraftFromUI()
-        updatePreview()
-    }
-
-    @objc
-    private func fixedDecimalsFieldChanged() {
-        let parsed = Int(fixedDecimalsField.stringValue) ?? fixedDecimalsStepper.integerValue
-        let clamped = max(0, min(8, parsed))
-        fixedDecimalsStepper.integerValue = clamped
-        fixedDecimalsField.stringValue = String(clamped)
+    private func decimalsChanged() {
         updateDraftFromUI()
         updatePreview()
     }
@@ -265,6 +288,11 @@ public final class SettingsWindowController: NSWindowController {
     private func roundingChanged() {
         updateDraftFromUI()
         updatePreview()
+    }
+
+    @objc
+    private func windowBehaviorChanged() {
+        updateDraftFromUI()
     }
 
     @objc

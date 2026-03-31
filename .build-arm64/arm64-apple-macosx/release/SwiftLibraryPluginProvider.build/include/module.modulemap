@@ -1,3 +1,0 @@
-module SwiftLibraryPluginProvider {
-    header "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftLibraryPluginProvider.build/include/SwiftLibraryPluginProvider-Swift.h"
-}

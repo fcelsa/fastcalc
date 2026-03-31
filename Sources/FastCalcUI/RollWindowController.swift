@@ -56,7 +56,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private let operandColumnChars = 3
 
     private let stateStore: AppStateStore
+    private let settingsStore: AppSettingsStore
     private var engine: CalculatorEngine
+    private var activeSettings: FastCalcFormatSettings
     private let scrollView: NSScrollView
     private let tableView: TapeTableView
 
@@ -80,29 +82,37 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private let statusLabel = NSTextField(labelWithString: "")
 
     private static let resetBaselineRow = TapeRow(special: "", calc: "0", operand: "C", kind: .reset)
+    private static let totalSeparatorMarker = "__SEP__"
+    private static let totalSeparatorGlyph = "┈"
 
     public init(stateStore: AppStateStore) {
         self.stateStore = stateStore
+        self.settingsStore = .shared
         self.engine = CalculatorEngine()
+        self.activeSettings = settingsStore.loadFormattingSettings()
 
         let contentSize = WindowPlacement.minimumSize
-        let initialScreen = NSScreen.main ?? NSScreen.screens.first
+        let initialScreen = RollWindowController.resolvePreferredScreen(from: activeSettings)
+            ?? NSScreen.main
+            ?? NSScreen.screens.first
         let frame = initialScreen.map { WindowPlacement.bottomRightFrame(on: $0, size: contentSize) }
             ?? NSRect(origin: .zero, size: contentSize)
 
+        let styleMask: NSWindow.StyleMask = activeSettings.floatingWindowEnabled ? [.titled] : [.borderless]
+
         let window = RollWindow(
             contentRect: frame,
-            styleMask: [.borderless],
+            styleMask: styleMask,
             backing: .buffered,
             defer: false
         )
-        window.title = ""
-        window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = true
+        window.title = activeSettings.floatingWindowEnabled ? "FastCalc" : ""
+        window.titleVisibility = activeSettings.floatingWindowEnabled ? .visible : .hidden
+        window.titlebarAppearsTransparent = !activeSettings.floatingWindowEnabled
         window.isReleasedWhenClosed = false
-        window.level = .floating
+        window.level = activeSettings.floatingWindowEnabled ? .floating : .normal
         window.hasShadow = true
-        window.isMovableByWindowBackground = true
+        window.isMovableByWindowBackground = activeSettings.floatingWindowEnabled
         window.minSize = WindowPlacement.minimumSize
         window.backgroundColor = NSColor(calibratedRed: 0.97, green: 0.95, blue: 0.90, alpha: 1.0)
         window.isOpaque = false
@@ -121,6 +131,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             name: .fastCalcSettingsDidChange,
             object: nil
         )
+        applyWindowBehaviorSettings(repositionToPreferredScreen: false)
         restoreState(stateStore.load())
     }
 
@@ -135,7 +146,59 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     @objc
     private func settingsDidChange() {
+        activeSettings = settingsStore.loadFormattingSettings()
+        applyWindowBehaviorSettings(repositionToPreferredScreen: true)
         reloadTape(moveToDraft: false)
+    }
+
+    private static func resolvePreferredScreen(from settings: FastCalcFormatSettings) -> NSScreen? {
+        let screens = NSScreen.screens
+        guard !screens.isEmpty else { return nil }
+
+        if let preferredScreenIndex = settings.preferredScreenIndex,
+           preferredScreenIndex >= 0,
+           preferredScreenIndex < screens.count
+        {
+            return screens[preferredScreenIndex]
+        }
+
+        return NSScreen.main ?? screens.first
+    }
+
+    private static func frameOnScreenBottomRight(screen: NSScreen, currentSize: NSSize) -> NSRect {
+        let maxWidth = max(WindowPlacement.minimumSize.width, screen.visibleFrame.width - WindowPlacement.margin * 2)
+        let maxHeight = max(WindowPlacement.minimumSize.height, screen.visibleFrame.height - WindowPlacement.margin * 2)
+        let constrainedSize = NSSize(width: min(currentSize.width, maxWidth), height: min(currentSize.height, maxHeight))
+        return WindowPlacement.bottomRightFrame(on: screen, size: constrainedSize)
+    }
+
+    private func applyWindowBehaviorSettings(repositionToPreferredScreen: Bool) {
+        guard let window else { return }
+
+        window.styleMask = activeSettings.floatingWindowEnabled ? [.titled] : [.borderless]
+        window.title = activeSettings.floatingWindowEnabled ? "FastCalc" : ""
+        window.titleVisibility = activeSettings.floatingWindowEnabled ? .visible : .hidden
+        window.titlebarAppearsTransparent = !activeSettings.floatingWindowEnabled
+        window.level = activeSettings.floatingWindowEnabled ? .floating : .normal
+        window.isMovableByWindowBackground = activeSettings.floatingWindowEnabled
+
+        var behavior: NSWindow.CollectionBehavior = [.fullScreenAuxiliary]
+        if activeSettings.showOnAllSpaces {
+            behavior.insert(.canJoinAllSpaces)
+        } else {
+            behavior.insert(.moveToActiveSpace)
+        }
+        window.collectionBehavior = behavior
+
+        if !activeSettings.floatingWindowEnabled {
+            applyMinimalBottomRightPlacement()
+        } else if repositionToPreferredScreen,
+                  let preferredScreen = Self.resolvePreferredScreen(from: activeSettings)
+        {
+            let target = Self.frameOnScreenBottomRight(screen: preferredScreen, currentSize: window.frame.size)
+            window.setFrame(target, display: true, animate: true)
+            saveCurrentState(isVisible: window.isVisible)
+        }
     }
 
     public var currentText: String {
@@ -145,6 +208,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func classifyRowRole(_ row: TapeRow) -> String {
+        if row.operand == Self.totalSeparatorMarker {
+            return "separator"
+        }
         if row.operand == "C" {
             return "reset"
         }
@@ -160,6 +226,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         if row.operand == "T" {
             return "totalResult"
         }
+        if row.operand == "↑" || row.operand == "↓" || row.operand == "~" {
+            return "result"
+        }
         if row.operand.isEmpty {
             return "result"
         }
@@ -168,6 +237,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func rowKindFromStoredData(calc: String, operand: String) -> TapeRowKind {
         switch classifyRowRole(TapeRow(special: "", calc: calc, operand: operand, kind: .committed)) {
+        case "separator":
+            return .separator
         case "reset":
             return .reset
         case "totalResult":
@@ -300,6 +371,11 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         }
     }
 
+    private func makeTotalSeparatorRow() -> TapeRow {
+        let dashes = String(repeating: Self.totalSeparatorGlyph, count: max(8, calcColumnChars - 2))
+        return TapeRow(special: "", calc: dashes, operand: Self.totalSeparatorMarker, kind: .separator)
+    }
+
     private func recomputeCommittedRows(editedRowIndex: Int?) {
         let originalRows = committedRows
         let replayEngine = CalculatorEngine()
@@ -310,6 +386,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         for (originalIndex, row) in originalRows.enumerated() {
             let role = classifyRowRole(row)
             switch role {
+            case "separator":
+                rebuiltRows.append(makeTotalSeparatorRow())
+
             case "reset":
                 _ = replayEngine.pressDelete()
                 rebuiltRows.append(Self.resetBaselineRow)
@@ -413,7 +492,13 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                     TapeRow(
                         special: "",
                         calc: TapeFormatter.formatDecimalForColumn(result.value),
-                        operand: op,
+                        operand: {
+                            if kind == .result {
+                                let marker = TapeFormatter.resultIndicator(for: result.value, settings: activeSettings)
+                                return marker.isEmpty ? op : marker
+                            }
+                            return op
+                        }(),
                         kind: kind
                     )
                 )
@@ -473,9 +558,25 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     public func applyMinimalBottomRightPlacement() {
         guard let window else { return }
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else { return }
+        guard let screen = Self.resolvePreferredScreen(from: activeSettings) ?? NSScreen.main ?? NSScreen.screens.first else { return }
         let frame = WindowPlacement.bottomRightFrame(on: screen, size: WindowPlacement.minimumSize)
         window.setFrame(frame, display: true, animate: true)
+    }
+
+    public func moveWindowToScreen(_ screenIndex: Int, persistPreference: Bool) {
+        guard let window else { return }
+        let screens = NSScreen.screens
+        guard screenIndex >= 0, screenIndex < screens.count else { return }
+
+        let targetFrame = Self.frameOnScreenBottomRight(screen: screens[screenIndex], currentSize: window.frame.size)
+        window.setFrame(targetFrame, display: true, animate: true)
+
+        if persistPreference {
+            activeSettings.preferredScreenIndex = screenIndex
+            settingsStore.saveFormattingSettings(activeSettings)
+        } else {
+            saveCurrentState(isVisible: window.isVisible)
+        }
     }
 
     public func persistState() {
@@ -677,6 +778,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func restoreState(_ state: FastCalcAppState) {
         if let frame = state.windowFrame {
             window?.setFrame(frame, display: false)
+        } else {
+            applyMinimalBottomRightPlacement()
         }
 
         committedRows.removeAll()
@@ -719,6 +822,11 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         guard !isAdjustingWindowHeight else { return }
         updateCalcColumnWidth()
         tableView.reloadData()
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    public func windowDidMove(_ notification: Notification) {
+        saveCurrentState(isVisible: window?.isVisible ?? false)
     }
 
     public func windowDidBecomeKey(_ notification: Notification) {
@@ -947,7 +1055,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(value), operand: op, kind: .committed))
         } else if snapshot.pendingOperator == nil, let register = snapshot.register {
             // Keep the lhs explicit when continuing from a recalled total/register value.
-            committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(register), operand: op, kind: .committed))
+            let continuationValue: Decimal
+            if activeSettings.decimalMode == .fixed {
+                continuationValue = TapeFormatter.normalizeForComputation(register, settings: activeSettings)
+                engine.replaceCurrentInput(with: continuationValue)
+            } else {
+                continuationValue = register
+            }
+            committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(continuationValue), operand: op, kind: .committed))
         }
 
         _ = engine.inputCharacter(ch)
@@ -981,6 +1096,10 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
         committedRows.append(contentsOf: pendingCommittedRows)
 
+        if result.kind == .totalRecall {
+            committedRows.append(makeTotalSeparatorRow())
+        }
+
         let op: String
         let kind: TapeRowKind
         if result.kind == .totalRecall {
@@ -997,7 +1116,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             }
         }
 
-        committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(result.value), operand: op, kind: kind))
+        let resultMarker = kind == .result ? TapeFormatter.resultIndicator(for: result.value, settings: activeSettings) : ""
+        let resultOperand = resultMarker.isEmpty ? op : resultMarker
+        committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(result.value), operand: resultOperand, kind: kind))
         draftInput = ""
         draftCursor = 0
         pendingPercentTrace = nil
@@ -1167,10 +1288,10 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             }
             alignment = .left
         case "operand":
-            text = data.operand
+            text = data.kind == .separator ? "" : data.operand
             alignment = .right
         default:
-            text = data.calc
+            text = data.kind == .separator ? String(repeating: Self.totalSeparatorGlyph, count: max(8, calcColumnChars - 2)) : data.calc
             alignment = .right
         }
 
@@ -1200,6 +1321,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             }
             if tableColumn?.identifier.rawValue == "special" {
                 label.textColor = .secondaryLabelColor
+            } else if data.kind == .separator {
+                label.textColor = .secondaryLabelColor
             } else {
                 label.textColor = cellColor
             }
@@ -1226,6 +1349,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 label.font = compactCellFont
             }
             if colId == "special" {
+                label.textColor = .secondaryLabelColor
+            } else if data.kind == .separator {
                 label.textColor = .secondaryLabelColor
             } else {
                 label.textColor = cellColor

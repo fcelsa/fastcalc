@@ -6,6 +6,29 @@
 import Foundation
 
 enum TapeFormatter {
+    private static let periodicTruncationPlaces = 8
+
+    static func resultIndicator(for value: Decimal, settings: FastCalcFormatSettings) -> String {
+        switch settings.decimalMode {
+        case .floating:
+            let truncated = truncateTowardZero(value, places: periodicTruncationPlaces)
+            return truncated == value ? "" : "~"
+        case .fixed:
+            let truncated = truncateTowardZero(value, places: periodicTruncationPlaces)
+            let rounded = normalizeForComputation(value, settings: settings)
+            guard rounded != truncated else { return "" }
+
+            switch settings.roundingMode {
+            case .up:
+                return "↑"
+            case .down:
+                return "↓"
+            case .nearest:
+                return rounded >= truncated ? "↑" : "↓"
+            }
+        }
+    }
+
     static func formatDecimalForColumn(_ value: Decimal) -> String {
         let settings = AppSettingsStore.shared.loadFormattingSettings()
         return formatDecimalForColumn(value, settings: settings)
@@ -25,14 +48,13 @@ enum TapeFormatter {
         let maxDecimals: Int
         switch settings.decimalMode {
         case .floating:
-            maxDecimals = max(0, 6 - max(0, intDigits - 10))
+            // Floating mode keeps as many decimals as available, capped to 8.
+            maxDecimals = 8
         case .fixed:
             maxDecimals = settings.fixedDecimalPlaces
         }
 
-        var rounded = Decimal()
-        var mutable = value
-        NSDecimalRound(&rounded, &mutable, maxDecimals, settings.roundingMode.decimalMode)
+        let rounded = normalizeForComputation(value, settings: settings)
 
         let signed = NSDecimalNumber(decimal: rounded).stringValue
         let parts = signed.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
@@ -80,6 +102,23 @@ enum TapeFormatter {
         return sign + groupedInt + "," + fraction
     }
 
+    static func normalizeForComputation(_ value: Decimal, settings: FastCalcFormatSettings) -> Decimal {
+        let targetDecimals: Int
+        switch settings.decimalMode {
+        case .floating:
+            targetDecimals = periodicTruncationPlaces
+        case .fixed:
+            targetDecimals = max(0, min(periodicTruncationPlaces, settings.fixedDecimalPlaces))
+        }
+
+        let truncated = truncateTowardZero(value, places: periodicTruncationPlaces)
+
+        var rounded = Decimal()
+        var mutable = truncated
+        NSDecimalRound(&rounded, &mutable, targetDecimals, settings.roundingMode.decimalMode)
+        return rounded
+    }
+
     static func parseLocaleAwareDecimal(_ raw: String) -> Decimal? {
         let normalized = raw
             .replacingOccurrences(of: "'", with: "")
@@ -111,5 +150,13 @@ enum TapeFormatter {
         }
 
         return String(output.reversed())
+    }
+
+    private static func truncateTowardZero(_ value: Decimal, places: Int) -> Decimal {
+        var truncated = Decimal()
+        var mutable = value
+        let mode: NSDecimalNumber.RoundingMode = value < 0 ? .up : .down
+        NSDecimalRound(&truncated, &mutable, places, mode)
+        return truncated
     }
 }

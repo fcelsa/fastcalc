@@ -1,3 +1,0 @@
-module SwiftSyntaxMacrosTestSupport {
-    header "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/include/SwiftSyntaxMacrosTestSupport-Swift.h"
-}

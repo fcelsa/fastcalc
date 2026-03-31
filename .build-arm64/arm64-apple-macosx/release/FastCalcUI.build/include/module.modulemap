@@ -1,3 +1,0 @@
-module FastCalcUI {
-    header "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/FastCalcUI.build/include/FastCalcUI-Swift.h"
-}

@@ -10,6 +10,7 @@ enum TapeRowKind: String, Codable {
     case result
     case total
     case reset
+    case separator
     case draft
 }
 
