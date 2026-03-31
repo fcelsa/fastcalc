@@ -1,30 +1,101 @@
-FastCalc
-========
+# FastCalc
 
-Breve descrizione
-- FastCalc è una semplice calcolatrice macOS (menu bar / app) focalizzata su rapidità e cronologia delle operazioni.
+FastCalc is a lightweight macOS calculator designed for fast keyboard input and a paper-roll style history.
 
-Build da sorgente
-1. Clona il repo:
+It runs as a menu bar utility, supports a global hotkey, and keeps both window state and tape content between launches.
 
-   git clone <url>
+## Features
+
+- Menu bar app with quick show/hide toggle
+- Global hotkey: `F16` (registered through Carbon hotkey APIs)
+- Paper-roll UI with editable rows for operators, percent values, and result inputs
+- Running total support (`T`) with grand-total recall behavior
+- Percent handling with operator-aware conversion
+- Single delete reset + double delete full clear behavior
+- Persistent app state (window frame, visibility, roll content, selection, scroll)
+- Decimal formatting settings:
+  - Floating or fixed decimals (0 to 8 places)
+  - Rounding mode: down, nearest, up
+
+## Requirements
+
+- macOS 14+
+- Swift 6.2 toolchain
+- Xcode or Command Line Tools
+
+## Build From Source
+
+1. Clone the repository and move into it:
+
+   ```bash
+   git clone <repo-url>
    cd fastcalc
+   ```
 
-2. Per eseguire la build e creare il bundle usa lo script incluso:
+2. Build the executable:
 
-   ./buildapp.sh
+   ```bash
+   swift build -c release
+   ```
 
-   Lo script esegue la build per arm64 e x86_64 e crea un bundle universale e uno zip nella cartella `dist`.
+3. Run the app directly from SwiftPM (development mode):
 
-Note sui test
-- Esegui i test con:
+   ```bash
+   swift run fastcalc
+   ```
 
-   swift test
+## Create a Universal .app Bundle
 
-- Se usi solo Command Line Tools, il progetto usa il package `swift-testing` (aggiunto in `Package.swift`) per la DSL dei test; con Xcode completo puoi rimuovere quella dipendenza.
+Use the provided packaging script:
 
-Risorse
-- Metti l'icona dell'app (formato `.icns`) in `resources/`.
+```bash
+./buildapp.sh
+```
 
-Licenza
-- (Aggiungi qui la licenza desiderata)
+The script:
+
+- Builds release binaries for `arm64` and `x86_64`
+- Merges them into a universal binary
+- Creates `dist/FastCalc.app`
+- Produces `dist/FastCalc-macOS-universal.zip`
+- Applies ad-hoc signing to the app bundle
+
+## Keyboard Controls
+
+- `0-9`, `.`, `,`: numeric input
+- `+`, `-`, `*`, `/`, `x`: operators
+- `%`: percent conversion
+- `Enter` or `=`: compute result
+- `T`: total key
+- `Backspace`: delete one character from current draft input
+- `Delete` (single press): reset current calculation
+- `Delete` (double press within threshold): full clear (including roll)
+- `Up` / `Down`: move editable row selection
+- `Home` / `End`: jump to first/last editable row
+- `Enter` on an editable committed row: edit row value
+- `Esc` while editing: cancel edit
+
+## Tests
+
+Run the test suite with:
+
+```bash
+swift test
+```
+
+Note: the package includes `swift-testing` as an explicit dependency to support environments where `import Testing` is not available by default with Command Line Tools only.
+
+## Resources
+
+Place app assets (for example an `.icns` icon) in the `resources/` directory.
+
+## Project Layout
+
+- `Sources/FastCalcCore`: calculation logic and models
+- `Sources/FastCalcUI`: app controller, window/menu bar UI, settings, formatting
+- `Sources/fastcalc`: executable entry point
+- `Tests/FastCalcCoreTests`: unit tests for engine and delete tracker
+
+## License
+
+MIT License (see `LICENSE`).
