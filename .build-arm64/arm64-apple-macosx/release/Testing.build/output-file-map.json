@@ -1,0 +1,535 @@
+{
+  "": {
+    "dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Testing.d",
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Testing.o",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/master.swiftdeps"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/EntryPoints/ABIEntryPoint.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIEntryPoint.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIEntryPoint~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIEntryPoint.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIEntryPoint.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/EntryPoints/EntryPoint.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/EntryPoint.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/EntryPoint~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/EntryPoint.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/EntryPoint.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/EntryPoints/SwiftPMEntryPoint.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SwiftPMEntryPoint.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SwiftPMEntryPoint~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SwiftPMEntryPoint.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SwiftPMEntryPoint.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/ABIv0.Record+Streaming.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record+Streaming.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record+Streaming~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record+Streaming.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record+Streaming.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/ABIv0.Record.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.Record.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/ABIv0.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/Encoded/ABIv0.EncodedBacktrace.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedBacktrace.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedBacktrace~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedBacktrace.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedBacktrace.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/Encoded/ABIv0.EncodedEvent.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedEvent.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedEvent~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedEvent.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedEvent.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/Encoded/ABIv0.EncodedInstant.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedInstant.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedInstant~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedInstant.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedInstant.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/Encoded/ABIv0.EncodedIssue.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedIssue.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedIssue~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedIssue.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedIssue.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/Encoded/ABIv0.EncodedMessage.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedMessage.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedMessage~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedMessage.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedMessage.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ABI/v0/Encoded/ABIv0.EncodedTest.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedTest.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedTest~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedTest.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ABIv0.EncodedTest.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Events/Clock.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Clock.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Clock~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Clock.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Clock.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Events/Event.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Events/Recorder/Event.ConsoleOutputRecorder.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.ConsoleOutputRecorder.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.ConsoleOutputRecorder~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.ConsoleOutputRecorder.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.ConsoleOutputRecorder.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Events/Recorder/Event.HumanReadableOutputRecorder.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.HumanReadableOutputRecorder.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.HumanReadableOutputRecorder~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.HumanReadableOutputRecorder.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.HumanReadableOutputRecorder.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Events/Recorder/Event.JUnitXMLRecorder.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.JUnitXMLRecorder.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.JUnitXMLRecorder~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.JUnitXMLRecorder.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.JUnitXMLRecorder.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Events/Recorder/Event.Symbol.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.Symbol.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.Symbol~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.Symbol.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Event.Symbol.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Events/TimeValue.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeValue.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeValue~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeValue.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeValue.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ExitTests/ExitCondition.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitCondition.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitCondition~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitCondition.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitCondition.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ExitTests/ExitTest.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitTest.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitTest~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitTest.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExitTest.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ExitTests/SpawnProcess.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SpawnProcess.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SpawnProcess~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SpawnProcess.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SpawnProcess.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/ExitTests/WaitFor.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/WaitFor.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/WaitFor~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/WaitFor.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/WaitFor.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Expectations/Expectation+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Expectations/Expectation.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expectation.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Expectations/ExpectationChecking+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExpectationChecking+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExpectationChecking+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExpectationChecking+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ExpectationChecking+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Issues/Confirmation.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Confirmation.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Confirmation~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Confirmation.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Confirmation.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Issues/ErrorSnapshot.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ErrorSnapshot.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ErrorSnapshot~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ErrorSnapshot.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ErrorSnapshot.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Issues/Issue+Recording.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue+Recording.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue+Recording~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue+Recording.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue+Recording.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Issues/Issue.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Issue.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Issues/KnownIssue.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/KnownIssue.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/KnownIssue~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/KnownIssue.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/KnownIssue.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Parameterization/CustomTestArgumentEncodable.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestArgumentEncodable.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestArgumentEncodable~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestArgumentEncodable.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestArgumentEncodable.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Parameterization/Test.Case.Generator.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.Generator.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.Generator~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.Generator.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.Generator.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Parameterization/Test.Case.ID.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.ID.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.ID~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.ID.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.ID.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Parameterization/Test.Case.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.Case.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Parameterization/TypeInfo.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TypeInfo.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TypeInfo~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TypeInfo.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TypeInfo.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/Configuration+EventHandling.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration+EventHandling.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration+EventHandling~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration+EventHandling.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration+EventHandling.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/Configuration.TestFilter.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration.TestFilter.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration.TestFilter~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration.TestFilter.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration.TestFilter.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/Configuration.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Configuration.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/Runner.Plan+Dumping.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan+Dumping.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan+Dumping~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan+Dumping.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan+Dumping.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/Runner.Plan.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.Plan.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/Runner.RuntimeState.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.RuntimeState.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.RuntimeState~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.RuntimeState.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.RuntimeState.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/Runner.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Runner.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Running/SkipInfo.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SkipInfo.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SkipInfo~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SkipInfo.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SkipInfo.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/Backtrace+Symbolication.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace+Symbolication.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace+Symbolication~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace+Symbolication.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace+Symbolication.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/Backtrace.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Backtrace.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/CustomTestStringConvertible.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestStringConvertible.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestStringConvertible~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestStringConvertible.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CustomTestStringConvertible.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/Expression+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/Expression.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Expression.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/SourceContext.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceContext.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceContext~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceContext.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceContext.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/SourceLocation+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/SourceAttribution/SourceLocation.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SourceLocation.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Additions/ArrayAdditions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ArrayAdditions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ArrayAdditions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ArrayAdditions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ArrayAdditions.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Additions/CollectionDifferenceAdditions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CollectionDifferenceAdditions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CollectionDifferenceAdditions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CollectionDifferenceAdditions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CollectionDifferenceAdditions.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Additions/CommandLineAdditions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CommandLineAdditions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CommandLineAdditions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CommandLineAdditions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CommandLineAdditions.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Additions/NumericAdditions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/NumericAdditions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/NumericAdditions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/NumericAdditions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/NumericAdditions.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Additions/ResultAdditions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ResultAdditions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ResultAdditions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ResultAdditions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ResultAdditions.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/CError.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CError.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CError~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CError.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CError.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/CartesianProduct.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CartesianProduct.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CartesianProduct~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CartesianProduct.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/CartesianProduct.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Environment.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Environment.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Environment~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Environment.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Environment.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/FileHandle.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/FileHandle.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/FileHandle~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/FileHandle.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/FileHandle.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/GetSymbol.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/GetSymbol.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/GetSymbol~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/GetSymbol.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/GetSymbol.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Graph.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Graph.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Graph~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Graph.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Graph.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/JSON.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/JSON.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/JSON~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/JSON.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/JSON.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Locked.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Locked.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Locked~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Locked.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Locked.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/SystemError.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SystemError.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SystemError~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SystemError.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SystemError.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Support/Versions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Versions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Versions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Versions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Versions.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Test+Discovery.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Discovery.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Discovery~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Discovery.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Discovery.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Test+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Test.ID.Selection.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID.Selection.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID.Selection~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID.Selection.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID.Selection.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Test.ID.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.ID.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Test.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Test.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Bug.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Bug.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Bug~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Bug.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Bug.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Comment+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Comment.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Comment.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/ConditionTrait+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/ConditionTrait.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ConditionTrait.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/HiddenTrait.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/HiddenTrait.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/HiddenTrait~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/HiddenTrait.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/HiddenTrait.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/ParallelizationTrait.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ParallelizationTrait.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ParallelizationTrait~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ParallelizationTrait.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/ParallelizationTrait.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/SPIAwareTrait.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SPIAwareTrait.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SPIAwareTrait~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SPIAwareTrait.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/SPIAwareTrait.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Tags/Tag+Macro.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Macro.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Macro~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Macro.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Macro.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Tags/Tag+Predefined.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Predefined.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Predefined~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Predefined.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag+Predefined.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Tags/Tag.Color+Loading.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color+Loading.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color+Loading~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color+Loading.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color+Loading.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Tags/Tag.Color.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.Color.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Tags/Tag.List.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.List.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.List~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.List.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.List.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Tags/Tag.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Tag.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/TimeLimitTrait.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeLimitTrait.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeLimitTrait~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeLimitTrait.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/TimeLimitTrait.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-testing/Sources/Testing/Traits/Trait.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Trait.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Trait~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Trait.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/Testing.build/Trait.dia"
+  }
+}

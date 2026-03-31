@@ -1,0 +1,13 @@
+{
+  "": {
+    "dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntax510.build/SwiftSyntax510.d",
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntax510.build/SwiftSyntax510.o",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntax510.build/master.swiftdeps"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/checkouts/swift-syntax/Sources/VersionMarkerModules/SwiftSyntax510/Empty.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntax510.build/Empty.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntax510.build/Empty~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntax510.build/Empty.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntax510.build/Empty.dia"
+  }
+}

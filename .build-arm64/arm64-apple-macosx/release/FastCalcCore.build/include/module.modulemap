@@ -1,0 +1,3 @@
+module FastCalcCore {
+    header "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/FastCalcCore.build/include/FastCalcCore-Swift.h"
+}

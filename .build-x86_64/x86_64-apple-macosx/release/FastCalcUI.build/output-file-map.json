@@ -1,0 +1,67 @@
+{
+  "": {
+    "dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/FastCalcUI.d",
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/FastCalcUI.o",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/master.swiftdeps"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/AppSettingsStore.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppSettingsStore.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppSettingsStore~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppSettingsStore.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppSettingsStore.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/AppStateStore.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppStateStore.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppStateStore~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppStateStore.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/AppStateStore.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/FastCalcAppController.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/FastCalcAppController.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/FastCalcAppController~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/FastCalcAppController.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/FastCalcAppController.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/HotKeyMonitor.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/HotKeyMonitor.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/HotKeyMonitor~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/HotKeyMonitor.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/HotKeyMonitor.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/MenuBarController.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/MenuBarController.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/MenuBarController~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/MenuBarController.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/MenuBarController.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/RollWindowController.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/RollWindowController.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/RollWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/RollWindowController.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/RollWindowController.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/SettingsWindowController.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/SettingsWindowController.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/SettingsWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/SettingsWindowController.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/SettingsWindowController.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/TapeFormatter.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeFormatter.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeFormatter~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeFormatter.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeFormatter.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/TapeRow.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeRow.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeRow~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeRow.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/TapeRow.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Sources/FastCalcUI/WindowPlacement.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/WindowPlacement.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/WindowPlacement~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/WindowPlacement.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUI.build/WindowPlacement.dia"
+  }
+}

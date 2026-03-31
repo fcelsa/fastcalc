@@ -1,0 +1,21 @@
+.DS_Store
+.build/
+.swiftpm/
+
+# Xcode
+*.xcworkspace
+xcuserdata/
+*.xcuserdatad
+DerivedData/
+
+# Distribution
+dist/
+*.zip
+
+# Editor
+.vscode/
+.idea/
+
+# Other
+*.swp
+.netrc

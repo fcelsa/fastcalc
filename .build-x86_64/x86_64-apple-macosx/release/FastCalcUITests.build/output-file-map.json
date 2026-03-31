@@ -1,0 +1,19 @@
+{
+  "": {
+    "dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/FastCalcUITests.d",
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/FastCalcUITests.o",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/master.swiftdeps"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Tests/FastCalcUITests/AppStateStoreTests.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/AppStateStoreTests.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/AppStateStoreTests~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/AppStateStoreTests.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/AppStateStoreTests.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/Tests/FastCalcUITests/WindowPlacementTests.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/WindowPlacementTests.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/WindowPlacementTests~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/WindowPlacementTests.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/FastCalcUITests.build/WindowPlacementTests.dia"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "": {
+    "dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/SwiftSyntaxMacrosTestSupport.d",
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/SwiftSyntaxMacrosTestSupport.o",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/master.swiftdeps"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/checkouts/swift-syntax/Sources/SwiftSyntaxMacrosTestSupport/Assertions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/Assertions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/Assertions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/Assertions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosTestSupport.build/Assertions.dia"
+  }
+}

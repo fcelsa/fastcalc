@@ -1,0 +1,97 @@
+{
+  "": {
+    "dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SwiftSyntaxBuilder.d",
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SwiftSyntaxBuilder.o",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/master.swiftdeps"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/ConvenienceInitializers.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ConvenienceInitializers.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ConvenienceInitializers~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ConvenienceInitializers.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ConvenienceInitializers.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/DeclSyntaxParseable.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/DeclSyntaxParseable.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/DeclSyntaxParseable~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/DeclSyntaxParseable.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/DeclSyntaxParseable.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/Indenter.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Indenter.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Indenter~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Indenter.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Indenter.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/ListBuilder.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ListBuilder.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ListBuilder~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ListBuilder.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ListBuilder.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/ResultBuilderExtensions.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilderExtensions.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilderExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilderExtensions.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilderExtensions.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/SwiftSyntaxBuilderCompatibility.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SwiftSyntaxBuilderCompatibility.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SwiftSyntaxBuilderCompatibility~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SwiftSyntaxBuilderCompatibility.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SwiftSyntaxBuilderCompatibility.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/Syntax+StringInterpolation.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Syntax+StringInterpolation.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Syntax+StringInterpolation~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Syntax+StringInterpolation.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/Syntax+StringInterpolation.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/SyntaxNodeWithBody.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxNodeWithBody.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxNodeWithBody~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxNodeWithBody.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxNodeWithBody.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/SyntaxParsable+ExpressibleByStringInterpolation.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxParsable+ExpressibleByStringInterpolation.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxParsable+ExpressibleByStringInterpolation~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxParsable+ExpressibleByStringInterpolation.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxParsable+ExpressibleByStringInterpolation.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/ValidatingSyntaxNodes.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ValidatingSyntaxNodes.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ValidatingSyntaxNodes~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ValidatingSyntaxNodes.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ValidatingSyntaxNodes.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/WithTrailingCommaSyntax+EnsuringTrailingComma.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/WithTrailingCommaSyntax+EnsuringTrailingComma.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/WithTrailingCommaSyntax+EnsuringTrailingComma~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/WithTrailingCommaSyntax+EnsuringTrailingComma.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/WithTrailingCommaSyntax+EnsuringTrailingComma.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/generated/BuildableNodes.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/BuildableNodes.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/BuildableNodes~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/BuildableNodes.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/BuildableNodes.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/generated/RenamedChildrenBuilderCompatibility.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/RenamedChildrenBuilderCompatibility.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/RenamedChildrenBuilderCompatibility~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/RenamedChildrenBuilderCompatibility.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/RenamedChildrenBuilderCompatibility.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/generated/ResultBuilders.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilders.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilders~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilders.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/ResultBuilders.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxBuilder/generated/SyntaxExpressibleByStringInterpolationConformances.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxExpressibleByStringInterpolationConformances.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxExpressibleByStringInterpolationConformances~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxExpressibleByStringInterpolationConformances.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxBuilder.build/SyntaxExpressibleByStringInterpolationConformances.dia"
+  }
+}

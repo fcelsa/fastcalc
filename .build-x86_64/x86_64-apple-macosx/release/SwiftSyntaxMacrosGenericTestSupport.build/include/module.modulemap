@@ -1,0 +1,3 @@
+module SwiftSyntaxMacrosGenericTestSupport {
+    header "/Volumes/mm4-data/fcs/fastcalc/.build-x86_64/x86_64-apple-macosx/release/SwiftSyntaxMacrosGenericTestSupport.build/include/SwiftSyntaxMacrosGenericTestSupport-Swift.h"
+}

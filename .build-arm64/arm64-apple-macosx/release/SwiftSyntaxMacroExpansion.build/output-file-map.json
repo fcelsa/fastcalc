@@ -1,0 +1,61 @@
+{
+  "": {
+    "dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/SwiftSyntaxMacroExpansion.d",
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/SwiftSyntaxMacroExpansion.o",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/master.swiftdeps"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/BasicMacroExpansionContext.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/BasicMacroExpansionContext.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/BasicMacroExpansionContext~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/BasicMacroExpansionContext.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/BasicMacroExpansionContext.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/FunctionParameterUtils.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/FunctionParameterUtils.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/FunctionParameterUtils~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/FunctionParameterUtils.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/FunctionParameterUtils.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/IndentationUtils.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/IndentationUtils.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/IndentationUtils~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/IndentationUtils.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/IndentationUtils.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/MacroArgument.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroArgument.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroArgument~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroArgument.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroArgument.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/MacroExpansion.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansion.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansion~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansion.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansion.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/MacroExpansionDiagnosticMessages.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansionDiagnosticMessages.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansionDiagnosticMessages~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansionDiagnosticMessages.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroExpansionDiagnosticMessages.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/MacroReplacement.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroReplacement.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroReplacement~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroReplacement.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroReplacement.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/MacroSpec.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSpec.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSpec~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSpec.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSpec.dia"
+  },
+  "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/checkouts/swift-syntax/Sources/SwiftSyntaxMacroExpansion/MacroSystem.swift": {
+    "object": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSystem.swift.o",
+    "swiftmodule": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSystem~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSystem.swiftdeps",
+    "diagnostics": "/Volumes/mm4-data/fcs/fastcalc/.build-arm64/arm64-apple-macosx/release/SwiftSyntaxMacroExpansion.build/MacroSystem.dia"
+  }
+}
