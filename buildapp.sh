@@ -5,6 +5,7 @@ APP_NAME="FastCalc"
 EXECUTABLE_NAME="fastcalc"
 BUNDLE_NAME="${APP_NAME}.app"
 ZIP_NAME="${APP_NAME}-macOS-universal.zip"
+ICON_FILE_NAME="fastcalc.icns"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="${ROOT_DIR}/dist"
@@ -14,6 +15,8 @@ APP_DIR="${DIST_DIR}/${BUNDLE_NAME}"
 BINARY_PATH="${APP_DIR}/Contents/MacOS/${APP_NAME}"
 PLIST_PATH="${APP_DIR}/Contents/Info.plist"
 ZIP_PATH="${DIST_DIR}/${ZIP_NAME}"
+ICON_SOURCE_PATH="${ROOT_DIR}/resources/${ICON_FILE_NAME}"
+ICON_BUNDLE_PATH="${APP_DIR}/Contents/Resources/${ICON_FILE_NAME}"
 
 printf "\n==> Pulizia output precedenti\n"
 rm -rf "${DIST_DIR}" "${BUILD_ARM_DIR}" "${BUILD_X86_DIR}"
@@ -41,6 +44,7 @@ cat > "${PLIST_PATH}" <<'EOF'
   <key>CFBundleName</key><string>FastCalc</string>
   <key>CFBundleDisplayName</key><string>FastCalc</string>
   <key>CFBundleIdentifier</key><string>com.fastcalc.app</string>
+  <key>CFBundleIconFile</key><string>fastcalc.icns</string>
   <key>CFBundleExecutable</key><string>FastCalc</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>1.0.0</string>
@@ -49,6 +53,13 @@ cat > "${PLIST_PATH}" <<'EOF'
 </dict>
 </plist>
 EOF
+
+printf "\n==> Copia icona app\n"
+if [[ ! -f "${ICON_SOURCE_PATH}" ]]; then
+  printf "Errore: icona non trovata in %s\n" "${ICON_SOURCE_PATH}" >&2
+  exit 1
+fi
+cp "${ICON_SOURCE_PATH}" "${ICON_BUNDLE_PATH}"
 
 printf "\n==> Firma ad-hoc bundle\n"
 codesign --force --deep --sign - "${APP_DIR}"
