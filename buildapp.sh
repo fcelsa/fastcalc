@@ -35,8 +35,25 @@ lipo -create \
   -output "${BINARY_PATH}"
 chmod +x "${BINARY_PATH}"
 
+printf "\n==> Calcolo versione e build\n"
+# Versione app: dal tag piu recente vX.Y.Z, fallback statico.
+if VERSION_TAG="$(git -C "${ROOT_DIR}" describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null)"; then
+  APP_VERSION="${VERSION_TAG#v}"
+else
+  APP_VERSION="1.0.0"
+fi
+
+# Build incrementale: conteggio commit, fallback timestamp se git non disponibile.
+if BUILD_NUMBER="$(git -C "${ROOT_DIR}" rev-list --count HEAD 2>/dev/null)"; then
+  :
+else
+  BUILD_NUMBER="$(date +%Y%m%d%H%M%S)"
+fi
+
+printf "Versione: %s\nBuild: %s\n" "${APP_VERSION}" "${BUILD_NUMBER}"
+
 printf "\n==> Scrittura Info.plist\n"
-cat > "${PLIST_PATH}" <<'EOF'
+cat > "${PLIST_PATH}" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -47,8 +64,8 @@ cat > "${PLIST_PATH}" <<'EOF'
   <key>CFBundleIconFile</key><string>fastcalc.icns</string>
   <key>CFBundleExecutable</key><string>FastCalc</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>${APP_VERSION}</string>
+  <key>CFBundleVersion</key><string>${BUILD_NUMBER}</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
 </dict>
 </plist>

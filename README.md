@@ -9,7 +9,7 @@ It runs as a menu bar utility, supports a global hotkey, and keeps both window s
 - Menu bar app with quick show/hide toggle
 - Global hotkey: `F16` (registered through Carbon hotkey APIs)
 - Paper-roll UI with editable rows for operators, percent values, and result inputs
-- Running total support (`T`) with grand-total recall behavior
+- Running total support with grand-total recall behavior
 - Percent handling with operator-aware conversion
 - Single delete reset + double delete full clear behavior
 - Persistent app state (window frame, visibility, roll content, selection, scroll)
@@ -65,8 +65,9 @@ The script:
 - `0-9`, `.`, `,`: numeric input
 - `+`, `-`, `*`, `/`, `x`: operators
 - `%`: percent conversion
-- `Enter` or `=`: compute result
-- `T`: total key
+- `Enter` or `=` or `T`: compute result
+- `M`: add GT to FIFO memory
+- `R`: recall FIFO memory as operand number
 - `Backspace`: delete one character from current draft input
 - `Delete` (single press): reset current calculation
 - `Delete` (double press within threshold): full clear (including roll)
@@ -95,6 +96,12 @@ Place app assets (for example an `.icns` icon) in the `resources/` directory.
 - `Sources/FastCalcUI`: app controller, window/menu bar UI, settings, formatting
 - `Sources/fastcalc`: executable entry point
 - `Tests/FastCalcCoreTests`: unit tests for engine and delete tracker
+
+## TODO List
+- Add configurable global hotkey
+- Add delta % difference calculation
+- Add power and square root calculation ?? It's really needed ??
+- Miscellaneous... 
 
 ## License
 
