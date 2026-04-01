@@ -71,8 +71,13 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private var isAdjustingWindowHeight = false
     private var isOperandColumnLocked = true
     private let operandRightPadding: CGFloat = 16
-    private let activeAlpha: CGFloat = 0.9
-    private let inactiveAlpha: CGFloat = 0.5
+    private var activeAlpha: CGFloat {
+        CGFloat(max(0.1, min(1.0, activeSettings.activeWindowOpacity)))
+    }
+
+    private var inactiveAlpha: CGFloat {
+        CGFloat(max(0.1, min(1.0, activeSettings.inactiveWindowOpacity)))
+    }
     private let statusBarHeight: CGFloat = 22
     private var hasInputFocus = false
     private var markerSelectedRow = -1
@@ -110,13 +115,13 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         window.titleVisibility = activeSettings.floatingWindowEnabled ? .visible : .hidden
         window.titlebarAppearsTransparent = !activeSettings.floatingWindowEnabled
         window.isReleasedWhenClosed = false
-        window.level = activeSettings.floatingWindowEnabled ? .floating : .normal
+        window.level = activeSettings.alwaysOnTop ? .floating : .normal
         window.hasShadow = true
         window.isMovableByWindowBackground = activeSettings.floatingWindowEnabled
         window.minSize = WindowPlacement.minimumSize
         window.backgroundColor = NSColor(calibratedRed: 0.97, green: 0.95, blue: 0.90, alpha: 1.0)
         window.isOpaque = false
-        window.alphaValue = inactiveAlpha
+        window.alphaValue = CGFloat(max(0.1, min(1.0, activeSettings.inactiveWindowOpacity)))
 
         self.scrollView = NSScrollView(frame: window.contentView?.bounds ?? .zero)
         self.tableView = TapeTableView(frame: .zero)
@@ -179,7 +184,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         window.title = activeSettings.floatingWindowEnabled ? "FastCalc" : ""
         window.titleVisibility = activeSettings.floatingWindowEnabled ? .visible : .hidden
         window.titlebarAppearsTransparent = !activeSettings.floatingWindowEnabled
-        window.level = activeSettings.floatingWindowEnabled ? .floating : .normal
+        window.level = activeSettings.alwaysOnTop ? .floating : .normal
         window.isMovableByWindowBackground = activeSettings.floatingWindowEnabled
 
         var behavior: NSWindow.CollectionBehavior = [.fullScreenAuxiliary]
@@ -378,6 +383,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func recomputeCommittedRows(editedRowIndex: Int?) {
         let originalRows = committedRows
+        let preservedFIFO = engine.snapshot().totalizerFIFO
         let replayEngine = CalculatorEngine()
         var rebuiltRows: [TapeRow] = []
         var replayPercentTrace: PercentTrace?
@@ -510,6 +516,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         }
 
         committedRows = rebuiltRows
+        replayEngine.replaceTotalizerFIFO(with: preservedFIFO)
         engine = replayEngine
     }
 
@@ -585,14 +592,26 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     public func loadPersistedVisibility() {
         let state = stateStore.load()
-        if state.windowVisible {
+        let shouldShowAtLaunch: Bool
+        switch activeSettings.startupMode {
+        case .visible:
+            shouldShowAtLaunch = true
+        case .hidden:
+            shouldShowAtLaunch = false
+        case .default:
+            shouldShowAtLaunch = state.windowVisible
+        }
+
+        if shouldShowAtLaunch {
             window?.makeKeyAndOrderFront(nil)
             focusDraftRow()
             updateInputFocusState()
+            saveCurrentState(isVisible: true)
         } else {
             window?.orderOut(nil)
             hasInputFocus = false
             updateStatusRow()
+            saveCurrentState(isVisible: false)
         }
     }
 
@@ -845,7 +864,17 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func updateStatusRow() {
         statusLedView.setOn(hasInputFocus)
-        statusLabel.stringValue = engine.snapshot().totalizer == 0 ? "" : "GT"
+        let snapshot = engine.snapshot()
+        let fifoCount = snapshot.totalizerFIFO.count
+        let gtText = TapeFormatter.formatDecimalForColumn(snapshot.totalizer, settings: activeSettings)
+
+        if fifoCount == 0, snapshot.totalizer == 0 {
+            statusLabel.stringValue = ""
+        } else if fifoCount > 0 {
+            statusLabel.stringValue = "\(fifoCount) GT: \(gtText)"
+        } else {
+            statusLabel.stringValue = "GT: \(gtText)"
+        }
         window?.alphaValue = hasInputFocus ? activeAlpha : inactiveAlpha
     }
 
@@ -967,6 +996,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 handleResult(.total)
                 continue
             }
+            if ch == "m" || ch == "M" {
+                handleStoreTotalizerInFIFO()
+                continue
+            }
+            if ch == "r" || ch == "R" {
+                handleRecallFromFIFO()
+                continue
+            }
             if "+-*/xX".contains(ch) {
                 handleOperator(ch)
                 continue
@@ -978,6 +1015,24 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         }
 
         return true
+    }
+
+    private func handleStoreTotalizerInFIFO() {
+        guard engine.enqueueTotalizerIfNeeded() != nil else { return }
+        pendingPercentTrace = nil
+        updateStatusRow()
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func handleRecallFromFIFO() {
+        pendingPercentTrace = nil
+        guard let value = engine.recallNextEnqueuedTotalizer() else { return }
+        let plain = NSDecimalNumber(decimal: value).stringValue
+        draftInput = plain.replacingOccurrences(of: ".", with: ",")
+        draftCursor = draftInput.count
+
+        reloadTape(moveToDraft: true)
+        saveCurrentState(isVisible: window?.isVisible ?? false)
     }
 
     @objc

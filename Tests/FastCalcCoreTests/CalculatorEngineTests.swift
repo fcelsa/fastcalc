@@ -227,4 +227,153 @@ struct CalculatorEngineTests {
         #expect(snapshot.roll.count == 1)
         #expect(snapshot.roll[0].output == "0.73333333")
     }
+
+    // Con operatore pendente e nessun nuovo input, invio deve confermare il parziale corrente
+    @Test func pendingAdditionWithoutRightOperandKeepsCurrentPartial() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("+")
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("+")
+
+        let result = engine.pressResult(.enter)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(200))
+    }
+
+    // Con sottrazione pendente e nessun nuovo input, invio deve confermare il parziale corrente
+    @Test func pendingSubtractionWithoutRightOperandKeepsCurrentPartial() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("-")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("-")
+
+        let result = engine.pressResult(.enter)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(75))
+    }
+
+    // Con moltiplicazione pendente e nessun nuovo input, invio deve confermare il parziale corrente
+    @Test func pendingMultiplicationWithoutRightOperandKeepsCurrentPartial() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("*")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("*")
+
+        let result = engine.pressResult(.enter)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(200))
+    }
+
+    // Con divisione pendente e nessun nuovo input, invio deve confermare il parziale corrente
+    @Test func pendingDivisionWithoutRightOperandKeepsCurrentPartial() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("/")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("/")
+
+        let result = engine.pressResult(.enter)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(50))
+    }
+
+    // M deve accodare GT (se non zero), azzerare GT e preservare il segno
+    @Test func enqueueTotalizerMovesSignedValueToFIFOAndResetsGT() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("-")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.pressResult(.enter)
+
+        #expect(engine.snapshot().totalizer == Decimal(75))
+        let enqueued = engine.enqueueTotalizerIfNeeded()
+
+        #expect(enqueued == Decimal(75))
+        #expect(engine.snapshot().totalizer == Decimal(0))
+        #expect(engine.snapshot().totalizerFIFO == [Decimal(75)])
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("-")
+        _ = engine.inputCharacter("3")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.pressResult(.enter)
+
+        #expect(engine.snapshot().totalizer == Decimal(-100))
+        let enqueuedNegative = engine.enqueueTotalizerIfNeeded()
+        #expect(enqueuedNegative == Decimal(-100))
+        #expect(engine.snapshot().totalizerFIFO == [Decimal(75), Decimal(-100)])
+    }
+
+    // M su GT zero/non presente non deve produrre effetti
+    @Test func enqueueTotalizerWithZeroDoesNothing() {
+        let engine = CalculatorEngine()
+
+        let enqueuedAtStartup = engine.enqueueTotalizerIfNeeded()
+        #expect(enqueuedAtStartup == nil)
+        #expect(engine.snapshot().totalizerFIFO.isEmpty)
+
+        _ = engine.inputCharacter("9")
+        _ = engine.pressResult(.enter)
+        _ = engine.enqueueTotalizerIfNeeded()
+
+        let enqueuedAgain = engine.enqueueTotalizerIfNeeded()
+        #expect(enqueuedAgain == nil)
+        #expect(engine.snapshot().totalizerFIFO == [Decimal(9)])
+    }
+
+    // R deve richiamare valori in ordine FIFO e rimuoverli dalla coda
+    @Test func recallFromFIFOUsesQueueOrderAndConsumesValues() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.pressResult(.enter)
+        _ = engine.enqueueTotalizerIfNeeded()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("0")
+        _ = engine.pressResult(.enter)
+        _ = engine.enqueueTotalizerIfNeeded()
+
+        let firstRecall = engine.recallNextEnqueuedTotalizer()
+        #expect(firstRecall == Decimal(10))
+        #expect(engine.snapshot().totalizerFIFO == [Decimal(20)])
+
+        _ = engine.inputCharacter("+")
+        _ = engine.inputCharacter("5")
+        let result = engine.pressResult(.enter)
+        #expect(result.value == Decimal(15))
+
+        let secondRecall = engine.recallNextEnqueuedTotalizer()
+        #expect(secondRecall == Decimal(20))
+        #expect(engine.snapshot().totalizerFIFO.isEmpty)
+
+        let none = engine.recallNextEnqueuedTotalizer()
+        #expect(none == nil)
+    }
 }

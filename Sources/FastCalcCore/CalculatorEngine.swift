@@ -5,6 +5,7 @@ public final class CalculatorEngine: @unchecked Sendable {
     private var register: Decimal?
     private var pendingOperator: CalculatorOperator?
     private var totalizer: Decimal = 0
+    private var totalizerFIFO: [Decimal] = []
     private var roll: [RollEntry] = []
     private var canRecallTotalizer = false
     private var lastResultHadOperator = false
@@ -173,12 +174,37 @@ public final class CalculatorEngine: @unchecked Sendable {
         deleteTracker.reset()
     }
 
+    @discardableResult
+    public func enqueueTotalizerIfNeeded() -> Decimal? {
+        guard totalizer != 0 else { return nil }
+        let enqueued = totalizer
+        totalizerFIFO.append(enqueued)
+        totalizer = 0
+        canRecallTotalizer = false
+        lastResultHadOperator = false
+        deleteTracker.reset()
+        return enqueued
+    }
+
+    @discardableResult
+    public func recallNextEnqueuedTotalizer() -> Decimal? {
+        guard !totalizerFIFO.isEmpty else { return nil }
+        let value = totalizerFIFO.removeFirst()
+        replaceCurrentInput(with: value)
+        return value
+    }
+
+    public func replaceTotalizerFIFO(with values: [Decimal]) {
+        totalizerFIFO = values
+    }
+
     public func snapshot() -> CalculatorSnapshot {
         CalculatorSnapshot(
             currentInput: currentInput,
             pendingOperator: pendingOperator,
             register: register,
             totalizer: totalizer,
+            totalizerFIFO: totalizerFIFO,
             roll: roll
         )
     }
@@ -197,6 +223,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         register = nil
         pendingOperator = nil
         totalizer = 0
+        totalizerFIFO = []
         roll = []
         canRecallTotalizer = false
         lastResultHadOperator = false
@@ -207,7 +234,10 @@ public final class CalculatorEngine: @unchecked Sendable {
         let inputValue = parseCurrentInput()
 
         if let pending = pendingOperator, let lhs = register {
-            let rhs = inputValue ?? lhs
+            guard let rhs = inputValue else {
+                // Confirm current partial when operator is pending but rhs is missing.
+                return lhs
+            }
             return apply(pending, lhs: lhs, rhs: rhs)
         }
 
@@ -227,6 +257,9 @@ public final class CalculatorEngine: @unchecked Sendable {
         let right = currentInput.isEmpty ? left : currentInput
 
         if let op = pendingOperator {
+            if currentInput.isEmpty {
+                return "\(left) [\(key.rawValue)]"
+            }
             return "\(left) \(op.rawValue) \(right) [\(key.rawValue)]"
         }
 
