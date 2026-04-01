@@ -43,8 +43,148 @@ private final class StatusLedView: NSView {
     }
 }
 
+private final class TapePrintPageView: NSView {
+    private let lines: [String]
+    private let headerLeft: String
+    private let headerRight: String
+    private let pageSize: NSSize
+
+    private let marginLeft: CGFloat = 54
+    private let marginRight: CGFloat = 36
+    private let marginTop: CGFloat = 36
+    private let marginBottom: CGFloat = 32
+    private let headerGap: CGFloat = 18
+    private let footerGap: CGFloat = 4
+
+    private let bodyFont = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+    private let headerFont = NSFont.monospacedSystemFont(ofSize: 8, weight: .semibold)
+    private let footerFont = NSFont.monospacedSystemFont(ofSize: 8, weight: .regular)
+
+    private let lineHeight: CGFloat
+    private let rowsPerPage: Int
+    private let totalPages: Int
+
+    override var isFlipped: Bool { true }
+
+    init(lines: [String], headerLeft: String, headerRight: String, pageSize: NSSize) {
+        self.lines = lines
+        self.headerLeft = headerLeft
+        self.headerRight = headerRight
+        self.pageSize = pageSize
+
+        let measuredLineHeight = ceil(("0" as NSString).size(withAttributes: [.font: bodyFont]).height)
+        self.lineHeight = max(measuredLineHeight + 2, 14)
+
+        let contentHeight = pageSize.height - marginTop - marginBottom - headerGap - footerGap
+        self.rowsPerPage = max(1, Int(floor(contentHeight / self.lineHeight)))
+        self.totalPages = max(1, Int(ceil(Double(lines.count) / Double(self.rowsPerPage))))
+
+        let frame = NSRect(x: 0, y: 0, width: pageSize.width, height: pageSize.height * CGFloat(self.totalPages))
+        super.init(frame: frame)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func knowsPageRange(_ range: NSRangePointer) -> Bool {
+        range.pointee = NSRange(location: 1, length: totalPages)
+        return true
+    }
+
+    override func rectForPage(_ page: Int) -> NSRect {
+        NSRect(x: 0, y: CGFloat(page - 1) * pageSize.height, width: pageSize.width, height: pageSize.height)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let currentPage = max(1, NSPrintOperation.current?.currentPage ?? 1)
+        drawPage(number: currentPage)
+    }
+
+    private func drawPage(number pageNumber: Int) {
+        let pageOriginY = CGFloat(pageNumber - 1) * pageSize.height
+        let pageRect = NSRect(x: 0, y: pageOriginY, width: pageSize.width, height: pageSize.height)
+
+        NSColor.white.setFill()
+        pageRect.fill()
+
+        // Visual guide: border on configured print margins.
+        let marginRect = NSRect(
+            x: marginLeft,
+            y: pageOriginY + marginTop,
+            width: pageSize.width - marginLeft - marginRight,
+            height: pageSize.height - marginTop - marginBottom
+        ).insetBy(dx: -5, dy: -5)
+        let marginPath = NSBezierPath(rect: marginRect)
+        marginPath.lineWidth = 0.5
+        NSColor(calibratedWhite: 0.2, alpha: 0.35).setStroke()
+        marginPath.stroke()
+
+        let headerTop = pageOriginY + (marginTop / 2)
+        let contentTop = headerTop + headerGap
+        let contentBottom = pageOriginY + pageSize.height - (marginBottom / 2) - footerGap
+
+        let paragraphLeft = NSMutableParagraphStyle()
+        paragraphLeft.alignment = .left
+        let paragraphRight = NSMutableParagraphStyle()
+        paragraphRight.alignment = .right
+        let paragraphCenter = NSMutableParagraphStyle()
+        paragraphCenter.alignment = .center
+
+        let headerLeftAttributes: [NSAttributedString.Key: Any] = [
+            .font: headerFont,
+            .foregroundColor: NSColor.textColor,
+            .paragraphStyle: paragraphLeft
+        ]
+        let headerRightAttributes: [NSAttributedString.Key: Any] = [
+            .font: headerFont,
+            .foregroundColor: NSColor.textColor,
+            .paragraphStyle: paragraphRight
+        ]
+        let bodyAttributes: [NSAttributedString.Key: Any] = [
+            .font: bodyFont,
+            .foregroundColor: NSColor.textColor,
+            .paragraphStyle: paragraphLeft
+        ]
+        let footerAttributes: [NSAttributedString.Key: Any] = [
+            .font: footerFont,
+            .foregroundColor: NSColor.textColor,
+            .paragraphStyle: paragraphCenter
+        ]
+
+        let printableWidth = pageSize.width - marginLeft - marginRight
+        let leftHeaderRect = NSRect(x: marginLeft, y: headerTop, width: printableWidth * 0.6, height: 12)
+        let rightHeaderRect = NSRect(x: marginLeft + printableWidth * 0.4, y: headerTop, width: printableWidth * 0.6, height: 12)
+        headerLeft.draw(in: leftHeaderRect, withAttributes: headerLeftAttributes)
+        headerRight.draw(in: rightHeaderRect, withAttributes: headerRightAttributes)
+
+        let firstLineIndex = (pageNumber - 1) * rowsPerPage
+        let lastLineIndex = min(firstLineIndex + rowsPerPage, lines.count)
+
+        var y = contentTop
+        if firstLineIndex < lastLineIndex {
+            for line in lines[firstLineIndex..<lastLineIndex] {
+                let lineRect = NSRect(x: marginLeft, y: y, width: printableWidth, height: lineHeight)
+                line.draw(in: lineRect, withAttributes: bodyAttributes)
+                y += lineHeight
+            }
+        }
+
+        let footerText = "Pag. \(pageNumber) di \(totalPages)"
+        let footerRect = NSRect(x: marginLeft, y: max(contentBottom, pageOriginY + pageSize.height - marginBottom), width: printableWidth, height: 12)
+        footerText.draw(in: footerRect, withAttributes: footerAttributes)
+    }
+}
+
 @MainActor
 public final class RollWindowController: NSWindowController, NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate {
+    private struct PrintableTapeRow {
+        let lineNumber: Int
+        let calc: String
+        let operand: String
+    }
+
     private struct PercentTrace {
         let convertedValue: Decimal
         let pendingOperator: CalculatorOperator?
@@ -89,6 +229,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private static let resetBaselineRow = TapeRow(special: "", calc: "0", operand: "C", kind: .reset)
     private static let totalSeparatorMarker = "__SEP__"
     private static let totalSeparatorGlyph = "┈"
+    private static let defaultVersion = "1.0"
 
     public init(stateStore: AppStateStore) {
         self.stateStore = stateStore
@@ -212,6 +353,245 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             .joined(separator: "\n")
     }
 
+    public func copyTapeTextToClipboard() {
+        let rows = makePrintableRows()
+        let lines = makePrintableLines(from: rows)
+        let payload = lines.joined(separator: "\n")
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(payload, forType: .string)
+    }
+
+    public func copyPreferredNumericToClipboard() {
+        let payload: String?
+
+        if let selectedRow = selectedCommittedNumericRow(),
+           let parsed = TapeFormatter.parseLocaleAwareDecimal(selectedRow.calc)
+        {
+            payload = localizedRawDecimalString(parsed)
+        } else if let lastResultRow = lastResultCommittedRow(),
+                  let parsed = TapeFormatter.parseLocaleAwareDecimal(lastResultRow.calc)
+        {
+            payload = localizedRawDecimalString(parsed)
+        } else {
+            payload = nil
+        }
+
+        guard let payload else {
+            NSSound.beep()
+            return
+        }
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(payload, forType: .string)
+    }
+
+    private func localizedRawDecimalString(_ value: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = .current
+        formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = false
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 16
+
+        if let localized = formatter.string(from: NSDecimalNumber(decimal: value)) {
+            return localized
+        }
+
+        return NSDecimalNumber(decimal: value).stringValue
+    }
+
+    private func selectedCommittedNumericRow() -> TapeRow? {
+        let selected = tableView.selectedRow
+        guard selected >= 0, selected < committedRows.count else { return nil }
+        let row = committedRows[selected]
+        guard TapeFormatter.parseLocaleAwareDecimal(row.calc) != nil else { return nil }
+        return row
+    }
+
+    private func lastResultCommittedRow() -> TapeRow? {
+        for row in committedRows.reversed() {
+            let role = classifyRowRole(row)
+            if role == "result" || role == "totalResult" {
+                return row
+            }
+        }
+        return nil
+    }
+
+    public func copyVisibleWindowPNGToClipboard() {
+        guard let window, let contentView = window.contentView else {
+            NSSound.beep()
+            return
+        }
+
+        let bounds = contentView.bounds
+        guard let imageRep = contentView.bitmapImageRepForCachingDisplay(in: bounds) else {
+            NSSound.beep()
+            return
+        }
+
+        imageRep.size = bounds.size
+        contentView.cacheDisplay(in: bounds, to: imageRep)
+
+        guard let pngData = imageRep.representation(using: .png, properties: [:]) else {
+            NSSound.beep()
+            return
+        }
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setData(pngData, forType: .png)
+    }
+
+    public func printTape() {
+        let printInfo = makeA4PrintInfo()
+        let pageView = makePrintablePageView(printInfo: printInfo)
+
+        let operation = NSPrintOperation(view: pageView, printInfo: printInfo)
+        operation.showsPrintPanel = true
+        operation.showsProgressPanel = true
+        _ = operation.run()
+    }
+
+    public func exportTapePDF() {
+        let panel = NSSavePanel()
+        panel.title = "Esporta PDF"
+        panel.nameFieldStringValue = "\(exportDateFormatter.string(from: Date())) FastCalc.pdf"
+        panel.allowedContentTypes = [.pdf]
+        panel.canCreateDirectories = true
+
+        guard panel.runModal() == .OK, let destinationURL = panel.url else {
+            return
+        }
+
+        let printInfo = makeA4PrintInfo()
+        printInfo.jobDisposition = NSPrintInfo.JobDisposition.save
+        printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = destinationURL
+
+        let pageView = makePrintablePageView(printInfo: printInfo)
+        let operation = NSPrintOperation(view: pageView, printInfo: printInfo)
+        operation.showsPrintPanel = false
+        operation.showsProgressPanel = true
+
+        if !operation.run() {
+            let alert = NSAlert()
+            alert.messageText = "Impossibile esportare il PDF"
+            alert.informativeText = "Si e verificato un errore durante l'esportazione del tape."
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+    }
+
+    private var exportDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }
+
+    private var dateTimeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter
+    }
+
+    private func appVersionString() -> String {
+        if let short = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+           !short.isEmpty
+        {
+            return short
+        }
+
+        if let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String,
+           !build.isEmpty
+        {
+            return build
+        }
+
+        return Self.defaultVersion
+    }
+
+    private func makeA4PrintInfo() -> NSPrintInfo {
+        let printInfo = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo.shared
+        printInfo.paperSize = NSSize(width: 595.276, height: 841.89)
+        printInfo.topMargin = 0
+        printInfo.bottomMargin = 0
+        printInfo.leftMargin = 0
+        printInfo.rightMargin = 0
+        printInfo.orientation = .portrait
+        printInfo.horizontalPagination = .automatic
+        printInfo.verticalPagination = .automatic
+        return printInfo
+    }
+
+    private func makePrintablePageView(printInfo: NSPrintInfo) -> TapePrintPageView {
+        let printableRows = makePrintableRows()
+        let lines = makePrintableLines(from: printableRows)
+        let versionHeader = "FastCalc ver. \(appVersionString())"
+        let timestamp = dateTimeFormatter.string(from: Date())
+        return TapePrintPageView(
+            lines: lines,
+            headerLeft: versionHeader,
+            headerRight: timestamp,
+            pageSize: printInfo.paperSize
+        )
+    }
+
+    private func makePrintableRows() -> [PrintableTapeRow] {
+        var rows: [PrintableTapeRow] = []
+        rows.reserveCapacity(committedRows.count)
+
+        for (index, row) in committedRows.enumerated() {
+            if row.kind == .draft {
+                continue
+            }
+
+            let calcValue: String
+            if row.kind == .separator || row.operand == Self.totalSeparatorMarker {
+                calcValue = String(repeating: Self.totalSeparatorGlyph, count: max(12, calcColumnChars))
+            } else {
+                calcValue = row.calc
+            }
+
+            let operandValue = row.operand == Self.totalSeparatorMarker ? "" : row.operand
+            rows.append(PrintableTapeRow(lineNumber: index + 1, calc: calcValue, operand: operandValue))
+        }
+
+        return rows
+    }
+
+    private func makePrintableLines(from rows: [PrintableTapeRow]) -> [String] {
+        let calcColumnWidth = max(rows.map(\.calc.count).max() ?? 1, calcColumnChars)
+        let lineColumnWidth = max(rows.last.map { String($0.lineNumber).count } ?? 1, 2)
+
+        var lines: [String] = []
+        lines.reserveCapacity(max(rows.count, 1))
+        if rows.isEmpty {
+            lines.append("0")
+            return lines
+        }
+
+        for row in rows {
+            let lineNumber = leftPadded(String(row.lineNumber), toLength: lineColumnWidth)
+            let calc = leftPadded(row.calc, toLength: calcColumnWidth)
+            let operand = leftPadded(row.operand, toLength: 2)
+            lines.append("\(lineNumber)  \(calc)  \(operand)")
+        }
+
+        return lines
+    }
+
+    private func leftPadded(_ value: String, toLength target: Int, with pad: Character = " ") -> String {
+        guard value.count < target else { return value }
+        return String(repeating: String(pad), count: target - value.count) + value
+    }
+
     private func classifyRowRole(_ row: TapeRow) -> String {
         if row.operand == Self.totalSeparatorMarker {
             return "separator"
@@ -261,7 +641,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         return role == "operator" || role == "percent" || role == "valueForResult"
     }
 
-    private func isEditableSelectionRow(index: Int, rows: [TapeRow]? = nil) -> Bool {
+    private func isSelectableSelectionRow(index: Int, rows: [TapeRow]? = nil) -> Bool {
         if index < 0 {
             return false
         }
@@ -275,7 +655,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             return true
         }
 
-        return isEditableOperandRow(index: index)
+        let row = currentRows[index]
+        return TapeFormatter.parseLocaleAwareDecimal(row.calc) != nil
     }
 
     private func beginEditingCommittedRow(_ index: Int) {
@@ -890,11 +1271,15 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         }
     }
 
-    private func markerHighlightColor(for row: TapeRow) -> NSColor {
-        if row.operand == "-" {
-            return NSColor(calibratedRed: 1.0, green: 0.56, blue: 0.56, alpha: 0.18)
+    private func markerHighlightColor(for row: TapeRow, index: Int) -> NSColor {
+        let isEditableValue = index == draftRowIndex() || isEditableOperandRow(index: index)
+        if isEditableValue {
+            if let value = TapeFormatter.parseLocaleAwareDecimal(row.calc), value < 0 {
+                return NSColor(calibratedRed: 1.0, green: 0.62, blue: 0.62, alpha: 0.24)
+            }
+            return NSColor(calibratedRed: 0.68, green: 0.93, blue: 0.68, alpha: 0.26)
         }
-        return NSColor(calibratedRed: 0.50, green: 0.78, blue: 1.0, alpha: 0.20)
+        return NSColor(calibratedRed: 0.60, green: 0.82, blue: 1.0, alpha: 0.24)
     }
 
     private func refreshCursorMarker(previous: Int, current: Int) {
@@ -1230,7 +1615,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let current = tableView.selectedRow >= 0 ? tableView.selectedRow : draftRowIndex()
         var target = current
 
-        if !isEditableSelectionRow(index: target, rows: rows) {
+        if !isSelectableSelectionRow(index: target, rows: rows) {
             target = draftRowIndex()
         }
 
@@ -1240,12 +1625,12 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 break
             }
             target = candidate
-            if isEditableSelectionRow(index: target, rows: rows) {
+            if isSelectableSelectionRow(index: target, rows: rows) {
                 break
             }
         }
 
-        if !isEditableSelectionRow(index: target, rows: rows) {
+        if !isSelectableSelectionRow(index: target, rows: rows) {
             target = current
         }
 
@@ -1259,13 +1644,13 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         guard !rows.isEmpty else { return }
 
         if first {
-            for i in rows.indices where isEditableSelectionRow(index: i, rows: rows) {
+            for i in rows.indices where isSelectableSelectionRow(index: i, rows: rows) {
                 tableView.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
                 tableView.scrollRowToVisible(i)
                 break
             }
         } else {
-            for i in rows.indices.reversed() where isEditableSelectionRow(index: i, rows: rows) {
+            for i in rows.indices.reversed() where isSelectableSelectionRow(index: i, rows: rows) {
                 tableView.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
                 tableView.scrollRowToVisible(i)
                 break
@@ -1325,8 +1710,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let rows = displayRows()
         guard row >= 0 && row < rows.count else { return nil }
         let data = rows[row]
-        let isCursorRow = markerSelectedRow == row && isEditableSelectionRow(index: row, rows: rows)
-        let highlightColor = isCursorRow ? markerHighlightColor(for: data) : .clear
+        let isCursorRow = markerSelectedRow == row && isSelectableSelectionRow(index: row, rows: rows)
+        let highlightColor = isCursorRow ? markerHighlightColor(for: data, index: row) : .clear
 
         let text: String
         let alignment: NSTextAlignment
