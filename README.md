@@ -64,6 +64,7 @@ The script:
 
 - `0-9`, `.`, `,`: numeric input
 - `+`, `-`, `*`, `/`, `x`: operators
+- `D`: delta percentuale (variazione % tra due valori)
 - `%`: percent conversion
 - `Enter` or `=` or `T`: compute result
 - `M`: add GT to FIFO memory

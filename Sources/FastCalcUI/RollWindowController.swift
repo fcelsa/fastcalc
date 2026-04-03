@@ -191,6 +191,15 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let baseValue: Decimal?
     }
 
+    private struct FullClearUndoSnapshot {
+        let committedRows: [TapeRow]
+        let draftInput: String
+        let draftCursor: Int
+        let hasPendingLeadingNegativeSign: Bool
+        let pendingPercentTrace: PercentTrace?
+        let selectedRow: Int
+    }
+
     private let specialColumnChars = 3
     private let calcColumnChars = 20
     private let operandColumnChars = 3
@@ -205,9 +214,11 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private var committedRows: [TapeRow] = []
     private var draftInput = ""
     private var draftCursor = 0
+    private var hasPendingLeadingNegativeSign = false
     private var editingCommittedRow: Int?
     private var isEditingModeActive = false
     private var pendingPercentTrace: PercentTrace?
+    private var lastFullClearSnapshot: FullClearUndoSnapshot?
     private var isAdjustingWindowHeight = false
     private var isOperandColumnLocked = true
     private let operandRightPadding: CGFloat = 16
@@ -219,6 +230,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         CGFloat(max(0.1, min(1.0, activeSettings.inactiveWindowOpacity)))
     }
     private let statusBarHeight: CGFloat = 22
+    private let defaultRowHeight: CGFloat = 24
+    private let separatorRowHeight: CGFloat = 12
     private var hasInputFocus = false
     private var markerSelectedRow = -1
 
@@ -228,7 +241,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private static let resetBaselineRow = TapeRow(special: "", calc: "0", operand: "C", kind: .reset)
     private static let totalSeparatorMarker = "__SEP__"
-    private static let totalSeparatorGlyph = "┈"
+    private static let totalSeparatorGlyph = "—"
     private static let defaultVersion = "1.0"
 
     public init(stateStore: AppStateStore) {
@@ -554,7 +567,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
             let calcValue: String
             if row.kind == .separator || row.operand == Self.totalSeparatorMarker {
-                calcValue = String(repeating: Self.totalSeparatorGlyph, count: max(12, calcColumnChars))
+                calcValue = separatorLineText(totalWidth: max(12, calcColumnChars))
             } else {
                 calcValue = row.calc
             }
@@ -599,7 +612,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         if row.operand == "C" {
             return "reset"
         }
-        if "+-*/".contains(row.operand) {
+        if "+-*/D".contains(row.operand) {
             return "operator"
         }
         if row.operand == "%" {
@@ -742,10 +755,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func feedDecimal(_ value: Decimal, to replayEngine: CalculatorEngine) {
-        let plain = NSDecimalNumber(decimal: value).stringValue
-        for ch in plain where ch != "-" {
-            _ = replayEngine.inputCharacter(ch)
-        }
+        replayEngine.replaceCurrentInput(with: value)
     }
 
     private func normalizeContributionForEngine(_ editedSignedContribution: Decimal, op: CalculatorOperator?) -> Decimal {
@@ -758,8 +768,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func makeTotalSeparatorRow() -> TapeRow {
-        let dashes = String(repeating: Self.totalSeparatorGlyph, count: max(8, calcColumnChars - 2))
+        let dashes = separatorLineText(totalWidth: max(8, calcColumnChars - 2))
         return TapeRow(special: "", calc: dashes, operand: Self.totalSeparatorMarker, kind: .separator)
+    }
+
+    private func separatorLineText(totalWidth: Int) -> String {
+        let width = max(8, totalWidth)
+        let dashCount = max(4, (width / 3) + 1)
+        return Array(repeating: String(Self.totalSeparatorGlyph), count: dashCount).joined(separator: " ")
     }
 
     private func recomputeCommittedRows(editedRowIndex: Int?) {
@@ -1000,6 +1016,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         committedRows = [Self.resetBaselineRow]
         draftInput = ""
         draftCursor = 0
+        hasPendingLeadingNegativeSign = false
         editingCommittedRow = nil
         isEditingModeActive = false
         pendingPercentTrace = nil
@@ -1019,7 +1036,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
         tableView.headerView = nil
         tableView.usesAlternatingRowBackgroundColors = false
-        tableView.rowHeight = 24
+        tableView.rowHeight = defaultRowHeight
         tableView.gridStyleMask = []
         tableView.intercellSpacing = NSSize(width: 0, height: 1)
         tableView.backgroundColor = paperColor
@@ -1200,6 +1217,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
         draftInput = ""
         draftCursor = 0
+        hasPendingLeadingNegativeSign = false
         editingCommittedRow = nil
         isEditingModeActive = false
         pendingPercentTrace = nil
@@ -1305,6 +1323,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func handleKeyEvent(_ event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command),
+           let chars = event.charactersIgnoringModifiers?.lowercased(),
+           chars == "z"
+        {
+            handleUndoAfterFullClear()
+            return true
+        }
+
         if let rawChars = event.characters, rawChars.contains("%") {
             handlePercent()
             return true
@@ -1329,6 +1355,12 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             return true
         case 125: // down
             moveSelectionVertically(1)
+            return true
+        case 116: // page up
+            moveSelectionByPage(-1)
+            return true
+        case 121: // page down
+            moveSelectionByPage(1)
             return true
         case 123: // left
             moveDraftCursor(-1)
@@ -1389,7 +1421,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 handleRecallFromFIFO()
                 continue
             }
-            if "+-*/xX".contains(ch) {
+            if "+-*/xXdD".contains(ch) {
                 handleOperator(ch)
                 continue
             }
@@ -1405,12 +1437,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func handleStoreTotalizerInFIFO() {
         guard engine.enqueueTotalizerIfNeeded() != nil else { return }
         pendingPercentTrace = nil
+        hasPendingLeadingNegativeSign = false
         updateStatusRow()
         saveCurrentState(isVisible: window?.isVisible ?? false)
     }
 
     private func handleRecallFromFIFO() {
         pendingPercentTrace = nil
+        hasPendingLeadingNegativeSign = false
         guard let value = engine.recallNextEnqueuedTotalizer() else { return }
         let plain = NSDecimalNumber(decimal: value).stringValue
         draftInput = plain.replacingOccurrences(of: ".", with: ",")
@@ -1438,6 +1472,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let snapshot = engine.snapshot()
         let originalValue = TapeFormatter.parseLocaleAwareDecimal(draftInput)
         guard let value = engine.applyPercent() else { return }
+        hasPendingLeadingNegativeSign = false
 
         if let originalValue {
             committedRows.append(
@@ -1475,6 +1510,12 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func handleDigitLike(_ ch: Character) {
         pendingPercentTrace = nil
+
+        if hasPendingLeadingNegativeSign {
+            _ = engine.inputCharacter("-")
+            hasPendingLeadingNegativeSign = false
+        }
+
         _ = engine.inputCharacter(ch)
 
         let index = min(max(0, draftCursor), draftInput.count)
@@ -1489,10 +1530,38 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func handleOperator(_ ch: Character) {
         pendingPercentTrace = nil
         let snapshot = engine.snapshot()
-        let op = (ch == "x" || ch == "X") ? "*" : String(ch)
+
+        if ch == "-", shouldStartLeadingNegativeDraft(snapshot: snapshot) {
+            draftInput = "-"
+            draftCursor = 1
+            hasPendingLeadingNegativeSign = true
+
+            reloadTape(moveToDraft: true)
+            saveCurrentState(isVisible: window?.isVisible ?? false)
+            return
+        }
+
+        if ch == "-", shouldInterpretMinusAsSignChange(snapshot: snapshot) {
+            _ = engine.inputCharacter(ch)
+            toggleDraftSign()
+
+            reloadTape(moveToDraft: true)
+            saveCurrentState(isVisible: window?.isVisible ?? false)
+            return
+        }
+
+        let op: String
+        if ch == "x" || ch == "X" {
+            op = "*"
+        } else if ch == "d" || ch == "D" {
+            op = "D"
+        } else {
+            op = String(ch)
+        }
 
         if let value = TapeFormatter.parseLocaleAwareDecimal(draftInput) {
-            committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(value), operand: op, kind: .committed))
+            let visualValue = visualValueForOperatorCommit(from: value, snapshot: snapshot)
+            committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(visualValue), operand: op, kind: .committed))
         } else if snapshot.pendingOperator == nil, let register = snapshot.register {
             // Keep the lhs explicit when continuing from a recalled total/register value.
             let continuationValue: Decimal
@@ -1508,23 +1577,177 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         _ = engine.inputCharacter(ch)
         draftInput = ""
         draftCursor = 0
+        hasPendingLeadingNegativeSign = false
 
         reloadTape(moveToDraft: true)
         saveCurrentState(isVisible: window?.isVisible ?? false)
     }
 
+    private func shouldStartLeadingNegativeDraft(snapshot: CalculatorSnapshot) -> Bool {
+        guard draftInput.isEmpty else { return false }
+        guard snapshot.pendingOperator == nil else { return false }
+        return snapshot.register == nil
+    }
+
+    private func makeFullClearUndoSnapshot() -> FullClearUndoSnapshot {
+        FullClearUndoSnapshot(
+            committedRows: committedRows,
+            draftInput: draftInput,
+            draftCursor: draftCursor,
+            hasPendingLeadingNegativeSign: hasPendingLeadingNegativeSign,
+            pendingPercentTrace: pendingPercentTrace,
+            selectedRow: tableView.selectedRow
+        )
+    }
+
+    private func isMeaningfulFullClearUndoSnapshot(_ snapshot: FullClearUndoSnapshot) -> Bool {
+        if !snapshot.draftInput.isEmpty {
+            return true
+        }
+
+        return snapshot.committedRows.contains { classifyRowRole($0) != "reset" }
+    }
+
+    private func restoreFromFullClearUndoSnapshot(_ snapshot: FullClearUndoSnapshot) {
+        committedRows = snapshot.committedRows
+        draftInput = snapshot.draftInput
+        draftCursor = min(max(0, snapshot.draftCursor), draftInput.count)
+        hasPendingLeadingNegativeSign = snapshot.hasPendingLeadingNegativeSign
+        pendingPercentTrace = snapshot.pendingPercentTrace
+        editingCommittedRow = nil
+        isEditingModeActive = false
+
+        recomputeCommittedRows(editedRowIndex: nil)
+        replayDraftIntoEngineIfNeeded()
+
+        reloadTape(moveToDraft: false)
+
+        let rows = displayRows()
+        guard !rows.isEmpty else { return }
+        let target = min(max(0, snapshot.selectedRow), rows.count - 1)
+        let previous = markerSelectedRow
+        tableView.selectRowIndexes(IndexSet(integer: target), byExtendingSelection: false)
+        markerSelectedRow = target
+        refreshCursorMarker(previous: previous, current: markerSelectedRow)
+        tableView.scrollRowToVisible(target)
+
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func replayDraftIntoEngineIfNeeded() {
+        guard !draftInput.isEmpty else { return }
+        if hasPendingLeadingNegativeSign, draftInput == "-" {
+            return
+        }
+
+        let normalized = draftInput.replacingOccurrences(of: ",", with: ".")
+        for ch in normalized {
+            _ = engine.inputCharacter(ch)
+        }
+        hasPendingLeadingNegativeSign = false
+    }
+
+    private func isDeletableCommittedRow(at index: Int) -> Bool {
+        guard index >= 0, index < committedRows.count else { return false }
+
+        let role = classifyRowRole(committedRows[index])
+        if role == "reset" {
+            // Keep at least one baseline reset row to avoid an empty invalid tape state.
+            return committedRows.count > 1
+        }
+
+        return true
+    }
+
+    private func lastDeletableCommittedRowIndex() -> Int? {
+        committedRows.indices.reversed().first { isDeletableCommittedRow(at: $0) }
+    }
+
+    private func deleteCommittedRow(at index: Int) {
+        guard isDeletableCommittedRow(at: index) else {
+            NSSound.beep()
+            return
+        }
+
+        committedRows.remove(at: index)
+        if committedRows.isEmpty {
+            committedRows = [Self.resetBaselineRow]
+        }
+
+        pendingPercentTrace = nil
+        hasPendingLeadingNegativeSign = false
+        draftInput = ""
+        draftCursor = 0
+
+        recomputeCommittedRows(editedRowIndex: nil)
+        reloadTape(moveToDraft: false)
+
+        let rows = displayRows()
+        guard !rows.isEmpty else { return }
+        let draftIndex = draftRowIndex()
+        let target = min(max(0, index), max(0, draftIndex))
+        let previous = markerSelectedRow
+        tableView.selectRowIndexes(IndexSet(integer: target), byExtendingSelection: false)
+        markerSelectedRow = target
+        refreshCursorMarker(previous: previous, current: markerSelectedRow)
+        tableView.scrollRowToVisible(target)
+
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func handleUndoAfterFullClear() {
+        guard let snapshot = lastFullClearSnapshot else {
+            NSSound.beep()
+            return
+        }
+
+        lastFullClearSnapshot = nil
+        restoreFromFullClearUndoSnapshot(snapshot)
+    }
+
+    private func visualValueForOperatorCommit(from value: Decimal, snapshot: CalculatorSnapshot) -> Decimal {
+        let lastRole = committedRows.last.map(classifyRowRole)
+        let shouldRenderAsLeadingNegative = snapshot.pendingOperator == .subtract
+            && snapshot.register == 0
+            && lastRole != "operator"
+
+        guard shouldRenderAsLeadingNegative else { return value }
+        return value < 0 ? value : -value
+    }
+
+    private func shouldInterpretMinusAsSignChange(snapshot: CalculatorSnapshot) -> Bool {
+        guard snapshot.pendingOperator != nil else { return false }
+        return draftInput.isEmpty || draftInput == "-"
+    }
+
+    private func toggleDraftSign() {
+        if draftInput.hasPrefix("-") {
+            draftInput.removeFirst()
+            draftCursor = max(0, draftCursor - 1)
+            return
+        }
+
+        draftInput.insert("-", at: draftInput.startIndex)
+        draftCursor += 1
+    }
+
     private func handleResult(_ key: ResultKey) {
+        let preResultSnapshot = engine.snapshot()
         var pendingCommittedRows: [TapeRow] = []
         if let trace = pendingPercentTrace {
-            let signedValue = signedPercentContribution(trace)
-            pendingCommittedRows.append(
-                TapeRow(
-                    special: "",
-                    calc: TapeFormatter.formatDecimalForColumn(signedValue),
-                    operand: "=",
-                    kind: .committed
+            // For multiplication-percent flow (e.g. 25 * 25 % =), the result row itself
+            // is the standalone percentage value. Do not duplicate it as an intermediate "=" row.
+            if trace.pendingOperator != .multiply {
+                let signedValue = signedPercentContribution(trace)
+                pendingCommittedRows.append(
+                    TapeRow(
+                        special: "",
+                        calc: TapeFormatter.formatDecimalForColumn(signedValue),
+                        operand: "=",
+                        kind: .committed
+                    )
                 )
-            )
+            }
         } else if let value = TapeFormatter.parseLocaleAwareDecimal(draftInput) {
             pendingCommittedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(value), operand: "=", kind: .committed))
         }
@@ -1551,7 +1774,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 op = "T"
                 kind = .total
             case .enter, .equals:
-                op = ""
+                op = preResultSnapshot.pendingOperator == .deltaPercent ? "%" : ""
                 kind = .result
             }
         }
@@ -1559,9 +1782,15 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let resultMarker = kind == .result ? TapeFormatter.resultIndicator(for: result.value, settings: activeSettings) : ""
         let resultOperand = resultMarker.isEmpty ? op : resultMarker
         committedRows.append(TapeRow(special: "", calc: TapeFormatter.formatDecimalForColumn(result.value), operand: resultOperand, kind: kind))
+
+        if result.kind == .totalRecall {
+            committedRows.append(makeTotalSeparatorRow())
+        }
+
         draftInput = ""
         draftCursor = 0
         pendingPercentTrace = nil
+        hasPendingLeadingNegativeSign = false
 
         reloadTape(moveToDraft: true)
         saveCurrentState(isVisible: window?.isVisible ?? false)
@@ -1569,14 +1798,43 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func handleBackspace() {
         pendingPercentTrace = nil
-        guard !draftInput.isEmpty else { return }
-        engine.backspace()
+        if draftInput.isEmpty {
+            if tableView.selectedRow >= 0,
+               tableView.selectedRow < committedRows.count,
+               isDeletableCommittedRow(at: tableView.selectedRow)
+            {
+                deleteCommittedRow(at: tableView.selectedRow)
+                return
+            }
+
+            if let fallbackIndex = lastDeletableCommittedRowIndex() {
+                deleteCommittedRow(at: fallbackIndex)
+                return
+            }
+
+            NSSound.beep()
+            return
+        }
 
         let index = min(max(0, draftCursor), draftInput.count)
+        var removedCharacter: Character?
+        if index > 0 {
+            let removeIndex = draftInput.index(draftInput.startIndex, offsetBy: index - 1)
+            removedCharacter = draftInput[removeIndex]
+        }
+
+        if !(hasPendingLeadingNegativeSign && removedCharacter == "-") {
+            engine.backspace()
+        }
+
         if index > 0 {
             let removeIndex = draftInput.index(draftInput.startIndex, offsetBy: index - 1)
             draftInput.remove(at: removeIndex)
             draftCursor = max(0, index - 1)
+        }
+
+        if draftInput.isEmpty {
+            hasPendingLeadingNegativeSign = false
         }
 
         reloadTape(moveToDraft: true)
@@ -1585,8 +1843,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func handleDelete() {
         pendingPercentTrace = nil
+        hasPendingLeadingNegativeSign = false
+        let snapshotBeforeDelete = makeFullClearUndoSnapshot()
+        let canCaptureSnapshot = isMeaningfulFullClearUndoSnapshot(snapshotBeforeDelete)
         let outcome = engine.pressDelete()
         if outcome == .fullClear {
+            if canCaptureSnapshot {
+                lastFullClearSnapshot = snapshotBeforeDelete
+            }
             committedRows = [Self.resetBaselineRow]
             draftInput = ""
             draftCursor = 0
@@ -1660,15 +1924,43 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         saveCurrentState(isVisible: window?.isVisible ?? false)
     }
 
+    private func moveSelectionByPage(_ direction: Int) {
+        let rows = displayRows()
+        guard !rows.isEmpty else { return }
+
+        let current = tableView.selectedRow >= 0 ? tableView.selectedRow : draftRowIndex()
+        let visibleRows = max(1, Int(floor(scrollView.contentView.bounds.height / max(1, tableView.rowHeight))) - 1)
+        let rawTarget = current + (direction * visibleRows)
+        var target = min(max(0, rawTarget), rows.count - 1)
+
+        if isSelectableSelectionRow(index: target, rows: rows) {
+            tableView.selectRowIndexes(IndexSet(integer: target), byExtendingSelection: false)
+            tableView.scrollRowToVisible(target)
+            saveCurrentState(isVisible: window?.isVisible ?? false)
+            return
+        }
+
+        let step = direction < 0 ? -1 : 1
+        while target >= 0 && target < rows.count {
+            target += step
+            if target < 0 || target >= rows.count {
+                break
+            }
+            if isSelectableSelectionRow(index: target, rows: rows) {
+                tableView.selectRowIndexes(IndexSet(integer: target), byExtendingSelection: false)
+                tableView.scrollRowToVisible(target)
+                saveCurrentState(isVisible: window?.isVisible ?? false)
+                return
+            }
+        }
+    }
+
     private func adjustWindowHeight(forDisplayedRows count: Int) {
         guard let window else { return }
         guard let screen = window.screen ?? NSScreen.main ?? NSScreen.screens.first else { return }
 
-        let lineHeight = tableView.rowHeight
-        let requiredContentHeight = max(
-            WindowPlacement.minimumSize.height,
-            CGFloat(max(count, 1)) * lineHeight + 20 + statusBarHeight
-        )
+        let requiredRowsHeight = totalHeightForDisplayRows(max(count, 1))
+        let requiredContentHeight = max(WindowPlacement.minimumSize.height, requiredRowsHeight + 20 + statusBarHeight)
 
         let currentFrame = window.frame
         let maxHeight = max(
@@ -1696,8 +1988,30 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         updateCalcColumnWidth()
     }
 
+    private func totalHeightForDisplayRows(_ count: Int) -> CGFloat {
+        let rows = displayRows()
+        guard !rows.isEmpty else { return defaultRowHeight }
+
+        let upperBound = min(max(count, 1), rows.count)
+        var total: CGFloat = 0
+        for index in 0..<upperBound {
+            total += rowHeight(for: rows[index])
+        }
+        return total
+    }
+
+    private func rowHeight(for row: TapeRow) -> CGFloat {
+        row.kind == .separator ? separatorRowHeight : defaultRowHeight
+    }
+
     public func numberOfRows(in tableView: NSTableView) -> Int {
         displayRows().count
+    }
+
+    public func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
+        let rows = displayRows()
+        guard row >= 0 && row < rows.count else { return defaultRowHeight }
+        return rowHeight(for: rows[row])
     }
 
     public func tableViewSelectionDidChange(_ notification: Notification) {
@@ -1711,7 +2025,10 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         guard row >= 0 && row < rows.count else { return nil }
         let data = rows[row]
         let isCursorRow = markerSelectedRow == row && isSelectableSelectionRow(index: row, rows: rows)
-        let highlightColor = isCursorRow ? markerHighlightColor(for: data, index: row) : .clear
+        let baseRowColor: NSColor = data.kind == .separator
+            ? NSColor(calibratedRed: 0.90, green: 0.86, blue: 0.78, alpha: 0.35)
+            : .clear
+        let highlightColor = isCursorRow ? markerHighlightColor(for: data, index: row) : baseRowColor
 
         let text: String
         let alignment: NSTextAlignment
@@ -1731,7 +2048,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             text = data.kind == .separator ? "" : data.operand
             alignment = .right
         default:
-            text = data.kind == .separator ? String(repeating: Self.totalSeparatorGlyph, count: max(8, calcColumnChars - 2)) : data.calc
+            text = data.kind == .separator ? separatorLineText(totalWidth: max(8, calcColumnChars - 2)) : data.calc
             alignment = .right
         }
 
@@ -1753,7 +2070,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             label.target = self
             label.action = #selector(commitEditingFromField(_:))
             if colId == "calc" {
-                label.font = calcCellFont
+                label.font = data.kind == .separator ? compactCellFont : calcCellFont
             } else if colId == "operand" {
                 label.font = operandCellFont
             } else {
@@ -1762,7 +2079,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             if tableColumn?.identifier.rawValue == "special" {
                 label.textColor = .secondaryLabelColor
             } else if data.kind == .separator {
-                label.textColor = .secondaryLabelColor
+                label.textColor = NSColor(calibratedWhite: 0.22, alpha: 0.72)
             } else {
                 label.textColor = cellColor
             }
@@ -1782,7 +2099,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             label.target = self
             label.action = #selector(commitEditingFromField(_:))
             if colId == "calc" {
-                label.font = calcCellFont
+                label.font = data.kind == .separator ? compactCellFont : calcCellFont
             } else if colId == "operand" {
                 label.font = operandCellFont
             } else {
@@ -1791,7 +2108,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             if colId == "special" {
                 label.textColor = .secondaryLabelColor
             } else if data.kind == .separator {
-                label.textColor = .secondaryLabelColor
+                label.textColor = NSColor(calibratedWhite: 0.22, alpha: 0.72)
             } else {
                 label.textColor = cellColor
             }

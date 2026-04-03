@@ -141,6 +141,78 @@ struct CalculatorEngineTests {
         #expect(result.value == Decimal(22))
     }
 
+    // Con moltiplicazione + percento, il risultato deve restituire il valore percentuale puro
+    @Test func multiplyPercentThenResultReturnsStandalonePercentage() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("*")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("%")
+
+        let result = engine.pressResult(.equals)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(string: "6.25"))
+    }
+
+    // Dopo il risultato percentuale standalone, + e - devono continuare dal valore percentuale
+    @Test func standalonePercentageCanBeUsedForSubsequentAddition() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("*")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("%")
+        _ = engine.pressResult(.equals)
+
+        _ = engine.inputCharacter("+")
+        _ = engine.inputCharacter("1")
+        let result = engine.pressResult(.enter)
+
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(string: "7.25"))
+    }
+
+    // Con divisione + percento, il risultato deve dividere per la percentuale convertita
+    @Test func dividePercentThenResultDividesByConvertedPercentage() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("/")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("%")
+
+        let result = engine.pressResult(.equals)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(string: "100"))
+    }
+
+    // Dopo divisione con percento, + e - devono continuare dal risultato calcolato
+    @Test func divisionPercentResultCanBeUsedForSubsequentAddition() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("/")
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("%")
+        _ = engine.pressResult(.equals)
+
+        _ = engine.inputCharacter("+")
+        _ = engine.inputCharacter("5")
+        let result = engine.pressResult(.enter)
+
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(string: "105"))
+    }
+
     // Richiamo totale avvia nuova operazione e resetta l'accumulatore
     @Test func recalledTotalCanStartNewOperationAndResetsAccumulator() {
         let engine = CalculatorEngine()
@@ -246,6 +318,42 @@ struct CalculatorEngineTests {
         #expect(result.value == Decimal(200))
     }
 
+    // Delta percentuale: variazione tra P1 e P2
+    @Test func deltaPercentComputesRelativeChange() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("9")
+        _ = engine.inputCharacter("5")
+        _ = engine.inputCharacter("D")
+        _ = engine.inputCharacter("8")
+        _ = engine.inputCharacter("5")
+
+        let result = engine.pressResult(.equals)
+        #expect(result.kind == .result)
+        #expect(result.value > Decimal(string: "-10.53")!)
+        #expect(result.value < Decimal(string: "-10.52")!)
+    }
+
+    // Delta percentuale può essere usato come base per operazioni successive
+    @Test func deltaPercentResultCanBeUsedForSubsequentAddition() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("D")
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.pressResult(.enter)
+
+        _ = engine.inputCharacter("+")
+        _ = engine.inputCharacter("5")
+        let result = engine.pressResult(.enter)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(15))
+    }
+
     // Con sottrazione pendente e nessun nuovo input, invio deve confermare il parziale corrente
     @Test func pendingSubtractionWithoutRightOperandKeepsCurrentPartial() {
         let engine = CalculatorEngine()
@@ -277,6 +385,49 @@ struct CalculatorEngineTests {
         let result = engine.pressResult(.enter)
         #expect(result.kind == .result)
         #expect(result.value == Decimal(200))
+    }
+
+    // Dopo un operatore pendente, '-' deve avviare il cambio segno del secondo operando
+    @Test func minusAfterPendingOperatorCreatesSignedRightOperand() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("*")
+        _ = engine.inputCharacter("-")
+
+        let afterMinus = engine.snapshot()
+        #expect(afterMinus.pendingOperator == .multiply)
+        #expect(afterMinus.currentInput == "-")
+
+        _ = engine.inputCharacter("1")
+        let result = engine.pressResult(.enter)
+
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(-100))
+    }
+
+    // Doppio '-' in attesa del secondo operando deve fare toggle del segno
+    @Test func repeatedMinusAfterPendingOperatorTogglesSign() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter("*")
+        _ = engine.inputCharacter("-")
+        _ = engine.inputCharacter("-")
+
+        let afterSecondMinus = engine.snapshot()
+        #expect(afterSecondMinus.pendingOperator == .multiply)
+        #expect(afterSecondMinus.currentInput == "")
+
+        _ = engine.inputCharacter("1")
+        let result = engine.pressResult(.enter)
+
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(100))
     }
 
     // Con divisione pendente e nessun nuovo input, invio deve confermare il parziale corrente

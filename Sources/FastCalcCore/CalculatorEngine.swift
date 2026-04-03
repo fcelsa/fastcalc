@@ -9,6 +9,7 @@ public final class CalculatorEngine: @unchecked Sendable {
     private var roll: [RollEntry] = []
     private var canRecallTotalizer = false
     private var lastResultHadOperator = false
+    private var pendingStandalonePercentResult = false
     private var deleteTracker: DeletePressTracker
 
     public init(deleteThreshold: TimeInterval = 0.7) {
@@ -22,6 +23,7 @@ public final class CalculatorEngine: @unchecked Sendable {
             currentInput.append(character)
             canRecallTotalizer = false
             lastResultHadOperator = false
+            pendingStandalonePercentResult = false
             return true
         case ".", ",":
             appendDecimalSeparator()
@@ -33,6 +35,10 @@ public final class CalculatorEngine: @unchecked Sendable {
             setOperator(.add)
             return true
         case "-":
+            if shouldToggleInputSignOnMinus() {
+                toggleCurrentInputSign()
+                return true
+            }
             setOperator(.subtract)
             return true
         case "*", "x", "X":
@@ -40,6 +46,9 @@ public final class CalculatorEngine: @unchecked Sendable {
             return true
         case "/":
             setOperator(.divide)
+            return true
+        case "d", "D":
+            setOperator(.deltaPercent)
             return true
         default:
             return false
@@ -51,8 +60,15 @@ public final class CalculatorEngine: @unchecked Sendable {
         let result: Decimal
 
         if let inputValue = parseCurrentInput() {
-            if pendingOperator != nil, let lhs = register {
-                result = lhs * inputValue / 100
+            if let pending = pendingOperator, let lhs = register {
+                switch pending {
+                case .add, .subtract, .multiply:
+                    result = lhs * inputValue / 100
+                case .divide:
+                    result = inputValue / 100
+                case .deltaPercent:
+                    result = inputValue / 100
+                }
             } else {
                 result = inputValue / 100
             }
@@ -65,6 +81,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         currentInput = NSDecimalNumber(decimal: result).stringValue
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = pendingOperator == .multiply
         deleteTracker.reset()
         return result
     }
@@ -72,11 +89,14 @@ public final class CalculatorEngine: @unchecked Sendable {
     public func appendDecimalSeparator() {
         if currentInput.isEmpty {
             currentInput = "0."
+        } else if currentInput == "-" {
+            currentInput = "-0."
         } else if !currentInput.contains(".") {
             currentInput.append(".")
         }
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = false
     }
 
     public func setOperator(_ op: CalculatorOperator) {
@@ -96,6 +116,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         pendingOperator = op
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = false
         deleteTracker.reset()
     }
 
@@ -104,6 +125,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         currentInput.removeLast()
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = false
     }
 
     @discardableResult
@@ -136,6 +158,7 @@ public final class CalculatorEngine: @unchecked Sendable {
             totalizer = 0
             canRecallTotalizer = false
             lastResultHadOperator = false
+            pendingStandalonePercentResult = false
             deleteTracker.reset()
             return ResultEvent(kind: .totalRecall, value: recalledTotal)
         }
@@ -158,6 +181,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         currentInput = ""
         canRecallTotalizer = true
         lastResultHadOperator = hadPendingOperator
+        pendingStandalonePercentResult = false
         deleteTracker.reset()
 
         return ResultEvent(kind: .result, value: value)
@@ -171,6 +195,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         currentInput = NSDecimalNumber(decimal: value).stringValue
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = false
         deleteTracker.reset()
     }
 
@@ -182,6 +207,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         totalizer = 0
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = false
         deleteTracker.reset()
         return enqueued
     }
@@ -216,6 +242,7 @@ public final class CalculatorEngine: @unchecked Sendable {
         totalizer = 0
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = false
     }
 
     private func fullClear() {
@@ -227,11 +254,16 @@ public final class CalculatorEngine: @unchecked Sendable {
         roll = []
         canRecallTotalizer = false
         lastResultHadOperator = false
+        pendingStandalonePercentResult = false
         deleteTracker.reset()
     }
 
     private func computeResultValue() -> Decimal {
         let inputValue = parseCurrentInput()
+
+        if shouldUseStandalonePercentResult(), let inputValue {
+            return inputValue
+        }
 
         if let pending = pendingOperator, let lhs = register {
             guard let rhs = inputValue else {
@@ -250,6 +282,31 @@ public final class CalculatorEngine: @unchecked Sendable {
         }
 
         return 0
+    }
+
+    private func shouldUseStandalonePercentResult() -> Bool {
+        guard pendingStandalonePercentResult else { return false }
+        guard pendingOperator == .multiply else { return false }
+        return register != nil && parseCurrentInput() != nil
+    }
+
+    private func shouldToggleInputSignOnMinus() -> Bool {
+        guard pendingOperator != nil else { return false }
+        return currentInput.isEmpty || currentInput == "-"
+    }
+
+    private func toggleCurrentInputSign() {
+        if currentInput == "-" {
+            currentInput = ""
+        } else if currentInput.hasPrefix("-") {
+            currentInput.removeFirst()
+        } else {
+            currentInput = "-" + currentInput
+        }
+
+        canRecallTotalizer = false
+        lastResultHadOperator = false
+        pendingStandalonePercentResult = false
     }
 
     private func expressionForResult(key: ResultKey) -> String {
@@ -284,6 +341,11 @@ public final class CalculatorEngine: @unchecked Sendable {
                 return 0
             }
             return lhs / rhs
+        case .deltaPercent:
+            if lhs == 0 {
+                return 0
+            }
+            return ((rhs - lhs) / lhs) * 100
         }
     }
 
