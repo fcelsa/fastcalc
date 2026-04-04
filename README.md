@@ -7,7 +7,7 @@ It runs as a menu bar utility, supports a global hotkey, and keeps both window s
 ## Features
 
 - Menu bar app with quick show/hide toggle
-- Global hotkey: `F16` (registered through Carbon hotkey APIs)
+- Configurable global hotkey with custom key combinations (default: `F16`, registered through Carbon hotkey APIs)
 - Paper-roll UI with editable rows for operators, percent values, and result inputs
 - Running total support with grand-total recall behavior
 - Percent handling with operator-aware conversion
@@ -65,17 +65,26 @@ The script:
 - `0-9`, `.`, `,`: numeric input
 - `+`, `-`, `*`, `/`, `x`: operators
 - `D`: delta percentuale (variazione % tra due valori)
+- `#`: inserisce una riga testo (max 20 caratteri) con operatore `#` nella colonna operatori
 - `%`: percent conversion
 - `Enter` or `=` or `T`: compute result
 - `M`: add GT to FIFO memory
 - `R`: recall FIFO memory as operand number
+- `S`: voice-read the numeric value on the selected row
+- Global toggle hotkey: recordable in Settings (custom key + modifiers, default `F16`)
 - `Backspace`: delete one character from current draft input
 - `Delete` (single press): reset current calculation
 - `Delete` (double press within threshold): full clear (including roll)
 - `Up` / `Down`: move editable row selection
 - `Home` / `End`: jump to first/last editable row
 - `Enter` on an editable committed row: edit row value
+- `Enter` on a `#` row: edit text value (non numeric)
 - `Esc` while editing: cancel edit
+
+Text rows (`#`) accepted characters:
+- letters and numbers
+- spaces and common punctuation
+- tabs/newlines/control characters are sanitized (removed or normalized)
 
 ## Tests
 

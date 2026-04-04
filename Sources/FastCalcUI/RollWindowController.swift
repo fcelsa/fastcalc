@@ -5,6 +5,7 @@
 //
 
 import AppKit
+import AVFoundation
 import FastCalcCore
 
 private final class RollWindow: NSWindow {
@@ -43,8 +44,13 @@ private final class StatusLedView: NSView {
     }
 }
 
+private struct TapePrintableLine {
+    let text: String
+    let isNegative: Bool
+}
+
 private final class TapePrintPageView: NSView {
-    private let lines: [String]
+    private let lines: [TapePrintableLine]
     private let headerLeft: String
     private let headerRight: String
     private let pageSize: NSSize
@@ -66,7 +72,7 @@ private final class TapePrintPageView: NSView {
 
     override var isFlipped: Bool { true }
 
-    init(lines: [String], headerLeft: String, headerRight: String, pageSize: NSSize) {
+    init(lines: [TapePrintableLine], headerLeft: String, headerRight: String, pageSize: NSSize) {
         self.lines = lines
         self.headerLeft = headerLeft
         self.headerRight = headerRight
@@ -147,6 +153,11 @@ private final class TapePrintPageView: NSView {
             .foregroundColor: NSColor.textColor,
             .paragraphStyle: paragraphLeft
         ]
+        let bodyNegativeAttributes: [NSAttributedString.Key: Any] = [
+            .font: bodyFont,
+            .foregroundColor: NSColor.systemRed,
+            .paragraphStyle: paragraphLeft
+        ]
         let footerAttributes: [NSAttributedString.Key: Any] = [
             .font: footerFont,
             .foregroundColor: NSColor.textColor,
@@ -166,7 +177,7 @@ private final class TapePrintPageView: NSView {
         if firstLineIndex < lastLineIndex {
             for line in lines[firstLineIndex..<lastLineIndex] {
                 let lineRect = NSRect(x: marginLeft, y: y, width: printableWidth, height: lineHeight)
-                line.draw(in: lineRect, withAttributes: bodyAttributes)
+                line.text.draw(in: lineRect, withAttributes: line.isNegative ? bodyNegativeAttributes : bodyAttributes)
                 y += lineHeight
             }
         }
@@ -182,6 +193,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private struct PrintableTapeRow {
         let lineNumber: Int
         let calc: String
+        let note: String
         let operand: String
     }
 
@@ -196,12 +208,21 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let draftInput: String
         let draftCursor: Int
         let hasPendingLeadingNegativeSign: Bool
+        let isNoteModeActive: Bool
+        let noteEditingRow: Int?
+        let noteOriginalText: String
+        let noteDraftInput: String
+        let isTextModeActive: Bool
+        let textEditingRow: Int?
+        let textOriginalText: String
+        let textDraftInput: String
         let pendingPercentTrace: PercentTrace?
         let selectedRow: Int
     }
 
     private let specialColumnChars = 3
     private let calcColumnChars = 20
+    private let noteColumnChars = 12
     private let operandColumnChars = 3
 
     private let stateStore: AppStateStore
@@ -215,6 +236,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private var draftInput = ""
     private var draftCursor = 0
     private var hasPendingLeadingNegativeSign = false
+    private var isNoteModeActive = false
+    private var noteEditingRow: Int?
+    private var noteOriginalText = ""
+    private var noteDraftInput = ""
+    private var isTextModeActive = false
+    private var textEditingRow: Int?
+    private var textOriginalText = ""
+    private var textDraftInput = ""
     private var editingCommittedRow: Int?
     private var isEditingModeActive = false
     private var pendingPercentTrace: PercentTrace?
@@ -232,11 +261,15 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private let statusBarHeight: CGFloat = 22
     private let defaultRowHeight: CGFloat = 24
     private let separatorRowHeight: CGFloat = 12
+    private let maxInlineNoteCharacters = 12
+    private let maxTextRowCharacters = 20
+    private let maxWindowHeightFraction: CGFloat = 0.80
     private var hasInputFocus = false
     private var markerSelectedRow = -1
 
     private let statusBarView = NSView(frame: .zero)
     private let statusLedView = StatusLedView(frame: .zero)
+    private let speechSynthesizer = AVSpeechSynthesizer()
     private let statusLabel = NSTextField(labelWithString: "")
 
     private static let resetBaselineRow = TapeRow(special: "", calc: "0", operand: "C", kind: .reset)
@@ -369,7 +402,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     public func copyTapeTextToClipboard() {
         let rows = makePrintableRows()
         let lines = makePrintableLines(from: rows)
-        let payload = lines.joined(separator: "\n")
+        let payload = lines.map(\.text).joined(separator: "\n")
 
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -422,6 +455,22 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let row = committedRows[selected]
         guard TapeFormatter.parseLocaleAwareDecimal(row.calc) != nil else { return nil }
         return row
+    }
+
+    private func speakSelectedNumericValue() {
+        guard let row = selectedCommittedNumericRow(),
+              let parsed = TapeFormatter.parseLocaleAwareDecimal(row.calc)
+        else {
+            NSSound.beep()
+            return
+        }
+
+        speechSynthesizer.stopSpeaking(at: .immediate)
+        let spoken = localizedRawDecimalString(parsed)
+        let utterance = AVSpeechUtterance(string: spoken)
+        let language = Locale.current.identifier.replacingOccurrences(of: "_", with: "-")
+        utterance.voice = AVSpeechSynthesisVoice(language: language)
+        speechSynthesizer.speak(utterance)
     }
 
     private func lastResultCommittedRow() -> TapeRow? {
@@ -573,28 +622,32 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             }
 
             let operandValue = row.operand == Self.totalSeparatorMarker ? "" : row.operand
-            rows.append(PrintableTapeRow(lineNumber: index + 1, calc: calcValue, operand: operandValue))
+            rows.append(PrintableTapeRow(lineNumber: index + 1, calc: calcValue, note: row.annotation, operand: operandValue))
         }
 
         return rows
     }
 
-    private func makePrintableLines(from rows: [PrintableTapeRow]) -> [String] {
+    private func makePrintableLines(from rows: [PrintableTapeRow]) -> [TapePrintableLine] {
         let calcColumnWidth = max(rows.map(\.calc.count).max() ?? 1, calcColumnChars)
+        let noteColumnWidth = max(rows.map(\.note.count).max() ?? 1, noteColumnChars)
         let lineColumnWidth = max(rows.last.map { String($0.lineNumber).count } ?? 1, 2)
 
-        var lines: [String] = []
+        var lines: [TapePrintableLine] = []
         lines.reserveCapacity(max(rows.count, 1))
         if rows.isEmpty {
-            lines.append("0")
+            lines.append(TapePrintableLine(text: "0", isNegative: false))
             return lines
         }
 
         for row in rows {
             let lineNumber = leftPadded(String(row.lineNumber), toLength: lineColumnWidth)
+            let note = leftPadded(row.note, toLength: noteColumnWidth)
             let calc = leftPadded(row.calc, toLength: calcColumnWidth)
             let operand = leftPadded(row.operand, toLength: 2)
-            lines.append("\(lineNumber)  \(calc)  \(operand)")
+            let lineText = "\(lineNumber)  \(note)  \(calc)  \(operand)"
+            let isNegative = TapeFormatter.parseLocaleAwareDecimal(row.calc).map { $0 < 0 } ?? false
+            lines.append(TapePrintableLine(text: lineText, isNegative: isNegative))
         }
 
         return lines
@@ -606,6 +659,12 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func classifyRowRole(_ row: TapeRow) -> String {
+        if row.kind == .note {
+            return "note"
+        }
+        if row.kind == .text || row.operand == "#" {
+            return "textRow"
+        }
         if row.operand == Self.totalSeparatorMarker {
             return "separator"
         }
@@ -635,6 +694,10 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func rowKindFromStoredData(calc: String, operand: String) -> TapeRowKind {
         switch classifyRowRole(TapeRow(special: "", calc: calc, operand: operand, kind: .committed)) {
+        case "note":
+            return .note
+        case "textRow":
+            return .text
         case "separator":
             return .separator
         case "reset":
@@ -651,7 +714,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func isEditableOperandRow(index: Int) -> Bool {
         guard index >= 0 && index < committedRows.count else { return false }
         let role = classifyRowRole(committedRows[index])
-        return role == "operator" || role == "percent" || role == "valueForResult"
+        return role == "operator" || role == "percent" || role == "valueForResult" || role == "textRow"
     }
 
     private func isSelectableSelectionRow(index: Int, rows: [TapeRow]? = nil) -> Bool {
@@ -669,12 +732,26 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         }
 
         let row = currentRows[index]
+        if row.kind == .note || row.kind == .text {
+            return true
+        }
         return TapeFormatter.parseLocaleAwareDecimal(row.calc) != nil
     }
 
     private func beginEditingCommittedRow(_ index: Int) {
         guard !isEditingModeActive else { return }
         guard isEditableOperandRow(index: index) else { return }
+
+        if classifyRowRole(committedRows[index]) == "textRow" {
+            isTextModeActive = true
+            textEditingRow = index
+            textOriginalText = committedRows[index].calc
+            textDraftInput = ""
+            reloadTape(moveToDraft: false)
+            focusTextEditor()
+            return
+        }
+
         editingCommittedRow = index
         isEditingModeActive = true
         tableView.reloadData()
@@ -700,6 +777,11 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func commitEditingValue() {
         guard let row = editingCommittedRow else { return }
+        guard row >= 0 && row < committedRows.count else {
+            editingCommittedRow = nil
+            isEditingModeActive = false
+            return
+        }
         let calcColumn = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("calc"))
         guard calcColumn >= 0 else { return }
 
@@ -790,18 +872,20 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             let role = classifyRowRole(row)
             switch role {
             case "separator":
-                rebuiltRows.append(makeTotalSeparatorRow())
+                var separator = makeTotalSeparatorRow()
+                separator.annotation = row.annotation
+                rebuiltRows.append(separator)
 
             case "reset":
                 _ = replayEngine.pressDelete()
-                rebuiltRows.append(Self.resetBaselineRow)
+                rebuiltRows.append(TapeRow(special: Self.resetBaselineRow.special, calc: Self.resetBaselineRow.calc, operand: Self.resetBaselineRow.operand, annotation: row.annotation, kind: .reset))
                 replayPercentTrace = nil
                 pendingPercentRowIndex = nil
 
             case "operator":
                 guard let value = TapeFormatter.parseLocaleAwareDecimal(row.calc) else { continue }
                 let formatted = TapeFormatter.formatDecimalForColumn(value)
-                rebuiltRows.append(TapeRow(special: "", calc: formatted, operand: row.operand, kind: .committed))
+                rebuiltRows.append(TapeRow(special: "", calc: formatted, operand: row.operand, annotation: row.annotation, kind: .committed))
                 feedDecimal(value, to: replayEngine)
                 if let op = row.operand.first {
                     _ = replayEngine.inputCharacter(op)
@@ -812,7 +896,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             case "percent":
                 guard let value = TapeFormatter.parseLocaleAwareDecimal(row.calc) else { continue }
                 let formatted = TapeFormatter.formatDecimalForColumn(value)
-                rebuiltRows.append(TapeRow(special: "", calc: formatted, operand: "%", kind: .committed))
+                rebuiltRows.append(TapeRow(special: "", calc: formatted, operand: "%", annotation: row.annotation, kind: .committed))
                 pendingPercentRowIndex = rebuiltRows.count - 1
                 feedDecimal(value, to: replayEngine)
                 let snap = replayEngine.snapshot()
@@ -855,7 +939,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
                 guard let value = TapeFormatter.parseLocaleAwareDecimal(row.calc) else { continue }
                 let formatted = TapeFormatter.formatDecimalForColumn(value)
-                rebuiltRows.append(TapeRow(special: "", calc: formatted, operand: "=", kind: .committed))
+                rebuiltRows.append(TapeRow(special: "", calc: formatted, operand: "=", annotation: row.annotation, kind: .committed))
                 feedDecimal(value, to: replayEngine)
 
             case "result", "totalResult":
@@ -902,6 +986,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                             }
                             return op
                         }(),
+                        annotation: row.annotation,
                         kind: kind
                     )
                 )
@@ -1017,6 +1102,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         draftInput = ""
         draftCursor = 0
         hasPendingLeadingNegativeSign = false
+        isNoteModeActive = false
+        noteEditingRow = nil
+        noteOriginalText = ""
+        noteDraftInput = ""
+        isTextModeActive = false
+        textEditingRow = nil
+        textOriginalText = ""
+        textDraftInput = ""
         editingCommittedRow = nil
         isEditingModeActive = false
         pendingPercentTrace = nil
@@ -1050,6 +1143,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let calcCharWidth = ("0" as NSString).size(withAttributes: [.font: calcFont]).width
         let smallCharWidth = ("0" as NSString).size(withAttributes: [.font: smallFont]).width
         let specialWidth = max(30, CGFloat(specialColumnChars) * smallCharWidth + 10)
+        let noteWidth = max(68, CGFloat(noteColumnChars) * smallCharWidth + 8)
         let operandWidth = max(30, CGFloat(operandColumnChars) * smallCharWidth + 8)
 
         let specialCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("special"))
@@ -1062,12 +1156,18 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         operandCol.minWidth = operandWidth
         operandCol.maxWidth = operandWidth
 
+        let noteCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("note"))
+        noteCol.width = noteWidth
+        noteCol.minWidth = noteWidth
+        noteCol.maxWidth = noteWidth
+
         let calcCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("calc"))
         calcCol.width = max(220, CGFloat(calcColumnChars) * calcCharWidth + 24)
         calcCol.minWidth = 1
         calcCol.resizingMask = .autoresizingMask
 
         tableView.addTableColumn(specialCol)
+        tableView.addTableColumn(noteCol)
         tableView.addTableColumn(calcCol)
         tableView.addTableColumn(operandCol)
         tableView.columnAutoresizingStyle = .noColumnAutoresizing
@@ -1144,6 +1244,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func displayRows() -> [TapeRow] {
         var rows = committedRows
+        if isTextModeActive, textEditingRow == nil {
+            rows.append(TapeRow(special: "", calc: textDraftInput, operand: "#", kind: .text))
+            return rows
+        }
+        if isNoteModeActive, noteEditingRow == nil {
+            rows.append(TapeRow(special: "", calc: "", operand: "", annotation: noteDraftInput, kind: .note))
+            return rows
+        }
         let draftCalc = draftInput.isEmpty ? "" : (TapeFormatter.parseLocaleAwareDecimal(draftInput).map(TapeFormatter.formatDecimalForColumn) ?? draftInput)
         rows.append(TapeRow(special: "", calc: draftCalc, operand: "", kind: .draft))
         return rows
@@ -1179,7 +1287,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func saveCurrentState(isVisible: Bool) {
         let text = committedRows
-            .map { "\($0.special)\t\($0.calc)\t\($0.operand)" }
+            .map { "\($0.special)\t\($0.calc)\t\($0.operand)\t\($0.annotation)\t\($0.kind.rawValue)" }
             .joined(separator: "\n")
 
         let state = FastCalcAppState(
@@ -1207,7 +1315,11 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 let special = parts.count > 0 ? parts[0] : ""
                 let calc = parts.count > 1 ? parts[1] : ""
                 let operand = parts.count > 2 ? parts[2] : ""
-                committedRows.append(TapeRow(special: special, calc: calc, operand: operand, kind: rowKindFromStoredData(calc: calc, operand: operand)))
+                let annotation = parts.count > 3 ? parts[3] : ""
+                let kind = parts.count > 4
+                    ? TapeRowKind(rawValue: parts[4]) ?? rowKindFromStoredData(calc: calc, operand: operand)
+                    : rowKindFromStoredData(calc: calc, operand: operand)
+                committedRows.append(TapeRow(special: special, calc: calc, operand: operand, annotation: annotation, kind: kind))
             }
         }
 
@@ -1218,6 +1330,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         draftInput = ""
         draftCursor = 0
         hasPendingLeadingNegativeSign = false
+        isNoteModeActive = false
+        noteEditingRow = nil
+        noteOriginalText = ""
+        noteDraftInput = ""
+        isTextModeActive = false
+        textEditingRow = nil
+        textOriginalText = ""
+        textDraftInput = ""
         editingCommittedRow = nil
         isEditingModeActive = false
         pendingPercentTrace = nil
@@ -1322,6 +1442,381 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         tableView.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(allColumns))
     }
 
+    private func sanitizeNoteText(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "\t", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+    }
+
+    private func sanitizeTextRowInput(_ raw: String) -> String {
+        let linear = raw
+            .replacingOccurrences(of: "\t", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+        let scalars = linear.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
+        return String(String.UnicodeScalarView(scalars))
+    }
+
+    private func pasteNumericFromClipboardIfAvailable() -> Bool {
+        guard !isNoteModeActive, !isTextModeActive, !isEditingModeActive else { return false }
+        guard let raw = NSPasteboard.general.string(forType: .string) else { return false }
+
+        let normalized = raw
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{00A0}", with: "")
+            .replacingOccurrences(of: " ", with: "")
+
+        guard let value = TapeFormatter.parseLocaleAwareDecimal(normalized) else { return false }
+
+        engine.replaceCurrentInput(with: value)
+        let plain = NSDecimalNumber(decimal: value).stringValue
+        draftInput = plain.replacingOccurrences(of: ".", with: ",")
+        draftCursor = draftInput.count
+        hasPendingLeadingNegativeSign = draftInput == "-"
+        pendingPercentTrace = nil
+
+        reloadTape(moveToDraft: true)
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+        return true
+    }
+
+    private func hasActiveCalculation() -> Bool {
+        let snapshot = engine.snapshot()
+        return !draftInput.isEmpty || snapshot.pendingOperator != nil || pendingPercentTrace != nil
+    }
+
+    private func toggleNoteMode() {
+        if isTextModeActive {
+            NSSound.beep()
+            return
+        }
+
+        if isNoteModeActive {
+            commitAndExitNoteMode()
+            return
+        }
+
+        let selected = tableView.selectedRow
+        if selected >= 0, selected < committedRows.count {
+            isNoteModeActive = true
+            noteEditingRow = selected
+            noteOriginalText = committedRows[selected].annotation
+            noteDraftInput = ""
+            reloadTape(moveToDraft: false)
+            focusNoteEditor()
+            saveCurrentState(isVisible: window?.isVisible ?? false)
+            return
+        }
+
+        guard selected == draftRowIndex(), !hasActiveCalculation() else {
+            NSSound.beep()
+            return
+        }
+
+        isNoteModeActive = true
+        noteEditingRow = nil
+        noteOriginalText = ""
+        noteDraftInput = ""
+        reloadTape(moveToDraft: true)
+        focusNoteEditor()
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func toggleTextMode() {
+        if isNoteModeActive || isEditingModeActive {
+            NSSound.beep()
+            return
+        }
+
+        if isTextModeActive {
+            commitAndExitTextMode()
+            return
+        }
+
+        if TapeFormatter.parseLocaleAwareDecimal(draftInput) != nil {
+            NSSound.beep()
+            return
+        }
+
+        let selected = tableView.selectedRow
+        if selected >= 0, selected < committedRows.count, classifyRowRole(committedRows[selected]) == "textRow" {
+            isTextModeActive = true
+            textEditingRow = selected
+            textOriginalText = committedRows[selected].calc
+            textDraftInput = ""
+            reloadTape(moveToDraft: false)
+            focusTextEditor()
+            saveCurrentState(isVisible: window?.isVisible ?? false)
+            return
+        }
+
+        let selectedIsResetRow = selected >= 0
+            && selected < committedRows.count
+            && classifyRowRole(committedRows[selected]) == "reset"
+
+        guard selected == draftRowIndex() || (selectedIsResetRow && !hasActiveCalculation()) else {
+            NSSound.beep()
+            return
+        }
+
+        isTextModeActive = true
+        textEditingRow = nil
+        textOriginalText = ""
+        textDraftInput = ""
+        reloadTape(moveToDraft: true)
+        focusTextEditor()
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func syncTextEditorTextToModel() {
+        if let row = textEditingRow, row >= 0, row < committedRows.count {
+            let calcColumn = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("calc"))
+            if calcColumn >= 0,
+               let cell = tableView.view(atColumn: calcColumn, row: row, makeIfNecessary: false) as? NSTableCellView,
+               let value = cell.textField?.stringValue
+            {
+                committedRows[row].calc = String(sanitizeTextRowInput(value).prefix(maxTextRowCharacters))
+            }
+            return
+        }
+
+        let draftRow = draftRowIndex()
+        let calcColumn = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("calc"))
+        if calcColumn >= 0,
+           draftRow >= 0,
+           let cell = tableView.view(atColumn: calcColumn, row: draftRow, makeIfNecessary: false) as? NSTableCellView,
+           let value = cell.textField?.stringValue
+        {
+            textDraftInput = String(sanitizeTextRowInput(value).prefix(maxTextRowCharacters))
+        }
+    }
+
+    private func focusTextEditor() {
+        guard isTextModeActive else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+
+            let targetRow: Int
+            if let row = self.textEditingRow, row >= 0, row < self.committedRows.count {
+                targetRow = row
+            } else {
+                targetRow = self.draftRowIndex()
+            }
+
+            let calcColumn = self.tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("calc"))
+            guard calcColumn >= 0,
+                  let cell = self.tableView.view(atColumn: calcColumn, row: targetRow, makeIfNecessary: false) as? NSTableCellView,
+                  let field = cell.textField
+            else {
+                return
+            }
+
+            self.window?.makeFirstResponder(field)
+            if let editor = field.currentEditor() {
+                let length = (field.stringValue as NSString).length
+                editor.selectedRange = NSRange(location: length, length: 0)
+            }
+        }
+    }
+
+    private func commitAndExitTextMode() {
+        guard isTextModeActive else { return }
+        let editedRow = textEditingRow
+
+        syncTextEditorTextToModel()
+
+        if let row = textEditingRow, row >= 0, row < committedRows.count {
+            let sanitized = sanitizeTextRowInput(committedRows[row].calc)
+            committedRows[row].calc = String(sanitized.prefix(maxTextRowCharacters))
+            committedRows[row].operand = "#"
+            committedRows[row].kind = .text
+        } else {
+            let sanitized = sanitizeTextRowInput(textDraftInput).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !sanitized.isEmpty {
+                committedRows.append(TapeRow(special: "", calc: String(sanitized.prefix(maxTextRowCharacters)), operand: "#", kind: .text))
+            }
+        }
+
+        isTextModeActive = false
+        textEditingRow = nil
+        textOriginalText = ""
+        textDraftInput = ""
+
+        if let editedRow, editedRow >= 0, editedRow < committedRows.count {
+            reloadTape(moveToDraft: false)
+            tableView.selectRowIndexes(IndexSet(integer: editedRow), byExtendingSelection: false)
+            tableView.scrollRowToVisible(editedRow)
+            window?.makeFirstResponder(tableView)
+        } else {
+            reloadTape(moveToDraft: true)
+        }
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func cancelAndExitTextMode() {
+        guard isTextModeActive else { return }
+        let editedRow = textEditingRow
+
+        if let row = textEditingRow, row >= 0, row < committedRows.count {
+            committedRows[row].calc = textOriginalText
+        }
+
+        isTextModeActive = false
+        textEditingRow = nil
+        textOriginalText = ""
+        textDraftInput = ""
+
+        if let editedRow, editedRow >= 0, editedRow < committedRows.count {
+            reloadTape(moveToDraft: false)
+            tableView.selectRowIndexes(IndexSet(integer: editedRow), byExtendingSelection: false)
+            tableView.scrollRowToVisible(editedRow)
+            window?.makeFirstResponder(tableView)
+        } else {
+            reloadTape(moveToDraft: true)
+        }
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func handleTextModeKeyEvent(_ event: NSEvent) -> Bool {
+        switch Int(event.keyCode) {
+        case 53: // escape
+            cancelAndExitTextMode()
+            return true
+        case 36, 76: // enter
+            commitAndExitTextMode()
+            return true
+        default:
+            break
+        }
+        return false
+    }
+
+    private func syncNoteEditorTextToModel() {
+        if let row = noteEditingRow, row >= 0, row < committedRows.count {
+            let targetColumn = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("note"))
+            if targetColumn >= 0,
+               let cell = tableView.view(atColumn: targetColumn, row: row, makeIfNecessary: false) as? NSTableCellView,
+               let value = cell.textField?.stringValue
+            {
+                committedRows[row].annotation = String(sanitizeNoteText(value).prefix(maxInlineNoteCharacters))
+            }
+            return
+        }
+
+        let draftRow = draftRowIndex()
+        let noteColumn = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("note"))
+        if noteColumn >= 0,
+           draftRow >= 0,
+           let cell = tableView.view(atColumn: noteColumn, row: draftRow, makeIfNecessary: false) as? NSTableCellView,
+           let value = cell.textField?.stringValue
+        {
+            noteDraftInput = String(sanitizeNoteText(value).prefix(maxInlineNoteCharacters))
+        }
+    }
+
+    private func focusNoteEditor() {
+        guard isNoteModeActive else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+
+            let targetRow: Int
+            let targetColumnId: String
+            if let row = self.noteEditingRow, row >= 0, row < self.committedRows.count {
+                targetRow = row
+                targetColumnId = "note"
+            } else {
+                targetRow = self.draftRowIndex()
+                targetColumnId = "note"
+            }
+
+            let targetColumn = self.tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(targetColumnId))
+            guard targetColumn >= 0,
+                  let cell = self.tableView.view(atColumn: targetColumn, row: targetRow, makeIfNecessary: false) as? NSTableCellView,
+                  let field = cell.textField
+            else {
+                return
+            }
+
+            self.window?.makeFirstResponder(field)
+            if let editor = field.currentEditor() {
+                let length = (field.stringValue as NSString).length
+                editor.selectedRange = NSRange(location: length, length: 0)
+            }
+        }
+    }
+
+    private func commitAndExitNoteMode() {
+        guard isNoteModeActive else { return }
+        let editedRow = noteEditingRow
+
+        syncNoteEditorTextToModel()
+
+        if let row = noteEditingRow, row >= 0, row < committedRows.count {
+            let sanitized = sanitizeNoteText(committedRows[row].annotation)
+            committedRows[row].annotation = String(sanitized.prefix(maxInlineNoteCharacters))
+        } else {
+            let sanitized = sanitizeNoteText(noteDraftInput).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !sanitized.isEmpty {
+                committedRows.append(TapeRow(special: "", calc: "", operand: "", annotation: String(sanitized.prefix(maxInlineNoteCharacters)), kind: .note))
+            }
+        }
+
+        isNoteModeActive = false
+        noteEditingRow = nil
+        noteOriginalText = ""
+        noteDraftInput = ""
+
+        if let editedRow, editedRow >= 0, editedRow < committedRows.count {
+            reloadTape(moveToDraft: false)
+            tableView.selectRowIndexes(IndexSet(integer: editedRow), byExtendingSelection: false)
+            tableView.scrollRowToVisible(editedRow)
+            window?.makeFirstResponder(tableView)
+        } else {
+            reloadTape(moveToDraft: true)
+        }
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func cancelAndExitNoteMode() {
+        guard isNoteModeActive else { return }
+        let editedRow = noteEditingRow
+
+        if let row = noteEditingRow, row >= 0, row < committedRows.count {
+            committedRows[row].annotation = noteOriginalText
+        }
+
+        isNoteModeActive = false
+        noteEditingRow = nil
+        noteOriginalText = ""
+        noteDraftInput = ""
+
+        if let editedRow, editedRow >= 0, editedRow < committedRows.count {
+            reloadTape(moveToDraft: false)
+            tableView.selectRowIndexes(IndexSet(integer: editedRow), byExtendingSelection: false)
+            tableView.scrollRowToVisible(editedRow)
+            window?.makeFirstResponder(tableView)
+        } else {
+            reloadTape(moveToDraft: true)
+        }
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func handleNoteModeKeyEvent(_ event: NSEvent) -> Bool {
+        switch Int(event.keyCode) {
+        case 53: // escape
+            cancelAndExitNoteMode()
+            return true
+        case 36, 76: // enter
+            commitAndExitNoteMode()
+            return true
+        default:
+            break
+        }
+        return false
+    }
+
     private func handleKeyEvent(_ event: NSEvent) -> Bool {
         if event.modifierFlags.contains(.command),
            let chars = event.charactersIgnoringModifiers?.lowercased(),
@@ -1331,9 +1826,44 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             return true
         }
 
+        if event.modifierFlags.contains(.command),
+           let chars = event.charactersIgnoringModifiers?.lowercased(),
+           chars == "v"
+        {
+            return pasteNumericFromClipboardIfAvailable()
+        }
+
         if let rawChars = event.characters, rawChars.contains("%") {
             handlePercent()
             return true
+        }
+
+        if let rawChars = event.characters, rawChars.contains("#") {
+            toggleTextMode()
+            return true
+        }
+
+        if event.modifierFlags.intersection([.command, .option, .control]).isEmpty,
+           let rawChars = event.charactersIgnoringModifiers?.lowercased(),
+           rawChars.contains("s"),
+           !isNoteModeActive,
+           !isTextModeActive,
+           !isEditingModeActive
+        {
+            speakSelectedNumericValue()
+            return true
+        }
+
+        if isNoteModeActive {
+            if handleNoteModeKeyEvent(event) {
+                return true
+            }
+        }
+
+        if isTextModeActive {
+            if handleTextModeKeyEvent(event) {
+                return true
+            }
         }
 
         if isEditingModeActive {
@@ -1401,6 +1931,10 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         }
 
         for ch in chars {
+            if ch == "n" || ch == "N" {
+                toggleNoteMode()
+                continue
+            }
             if ch == "=" {
                 handleResult(.equals)
                 continue
@@ -1463,9 +1997,82 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     @objc
     private func commitEditingFromField(_ sender: NSTextField) {
+        if isTextModeActive {
+            commitAndExitTextMode()
+            return
+        }
+
+        if isNoteModeActive {
+            commitAndExitNoteMode()
+            return
+        }
+
         if isEditingModeActive {
             commitEditingValue()
         }
+    }
+
+    public func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        guard isNoteModeActive || isTextModeActive else { return false }
+
+        if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+            if isTextModeActive {
+                cancelAndExitTextMode()
+            } else {
+                cancelAndExitNoteMode()
+            }
+            return true
+        }
+
+        if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+            if isTextModeActive {
+                commitAndExitTextMode()
+            } else {
+                commitAndExitNoteMode()
+            }
+            return true
+        }
+
+        return false
+    }
+
+    public func controlTextDidChange(_ notification: Notification) {
+        guard (isNoteModeActive || isTextModeActive),
+              let field = notification.object as? NSTextField
+        else {
+            return
+        }
+
+        let row = tableView.row(for: field)
+        let col = tableView.column(for: field)
+        guard row >= 0, col >= 0,
+              col < tableView.tableColumns.count
+        else {
+            return
+        }
+
+        let colId = tableView.tableColumns[col].identifier.rawValue
+        let maxChars = isTextModeActive ? maxTextRowCharacters : maxInlineNoteCharacters
+        let sanitized = isTextModeActive ? sanitizeTextRowInput(field.stringValue) : sanitizeNoteText(field.stringValue)
+
+        if sanitized.count > maxChars {
+            field.stringValue = String(sanitized.prefix(maxChars))
+            NSSound.beep()
+        } else if sanitized != field.stringValue {
+            field.stringValue = sanitized
+        }
+
+        if isTextModeActive, colId == "calc", row >= 0, row < committedRows.count {
+            committedRows[row].calc = field.stringValue
+        } else if isTextModeActive, colId == "calc" {
+            textDraftInput = field.stringValue
+        } else if colId == "note", row >= 0, row < committedRows.count {
+            committedRows[row].annotation = field.stringValue
+        } else if colId == "note" {
+            noteDraftInput = field.stringValue
+        }
+
+        saveCurrentState(isVisible: window?.isVisible ?? false)
     }
 
     private func handlePercent() {
@@ -1595,13 +2202,21 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             draftInput: draftInput,
             draftCursor: draftCursor,
             hasPendingLeadingNegativeSign: hasPendingLeadingNegativeSign,
+            isNoteModeActive: isNoteModeActive,
+            noteEditingRow: noteEditingRow,
+            noteOriginalText: noteOriginalText,
+            noteDraftInput: noteDraftInput,
+            isTextModeActive: isTextModeActive,
+            textEditingRow: textEditingRow,
+            textOriginalText: textOriginalText,
+            textDraftInput: textDraftInput,
             pendingPercentTrace: pendingPercentTrace,
             selectedRow: tableView.selectedRow
         )
     }
 
     private func isMeaningfulFullClearUndoSnapshot(_ snapshot: FullClearUndoSnapshot) -> Bool {
-        if !snapshot.draftInput.isEmpty {
+        if !snapshot.draftInput.isEmpty || !snapshot.noteDraftInput.isEmpty || !snapshot.textDraftInput.isEmpty {
             return true
         }
 
@@ -1613,6 +2228,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         draftInput = snapshot.draftInput
         draftCursor = min(max(0, snapshot.draftCursor), draftInput.count)
         hasPendingLeadingNegativeSign = snapshot.hasPendingLeadingNegativeSign
+        isNoteModeActive = snapshot.isNoteModeActive
+        noteEditingRow = snapshot.noteEditingRow
+        noteOriginalText = snapshot.noteOriginalText
+        noteDraftInput = snapshot.noteDraftInput
+        isTextModeActive = snapshot.isTextModeActive
+        textEditingRow = snapshot.textEditingRow
+        textOriginalText = snapshot.textOriginalText
+        textDraftInput = snapshot.textDraftInput
         pendingPercentTrace = snapshot.pendingPercentTrace
         editingCommittedRow = nil
         isEditingModeActive = false
@@ -1846,6 +2469,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         hasPendingLeadingNegativeSign = false
         let snapshotBeforeDelete = makeFullClearUndoSnapshot()
         let canCaptureSnapshot = isMeaningfulFullClearUndoSnapshot(snapshotBeforeDelete)
+        isNoteModeActive = false
+        noteEditingRow = nil
+        noteOriginalText = ""
+        noteDraftInput = ""
+        isTextModeActive = false
+        textEditingRow = nil
+        textOriginalText = ""
+        textDraftInput = ""
         let outcome = engine.pressDelete()
         if outcome == .fullClear {
             if canCaptureSnapshot {
@@ -1966,7 +2597,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let maxHeight = max(
             WindowPlacement.minimumSize.height,
             min(
-                screen.visibleFrame.height * (2.0 / 3.0),
+                screen.visibleFrame.height * maxWindowHeightFraction,
                 (screen.visibleFrame.maxY - currentFrame.minY) - WindowPlacement.margin
             )
         )
@@ -2036,9 +2667,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         switch tableColumn?.identifier.rawValue {
         case "special":
             let cursorMark = isCursorRow ? ">" : ""
-            if data.kind == .committed {
+            if data.kind != .draft {
                 let allRows = displayRows()
-                let count = allRows[0...row].filter { $0.kind == .committed }.count
+                let count = allRows[0...row].filter { $0.kind != .draft }.count
                 text = cursorMark + String(count)
             } else {
                 text = cursorMark
@@ -2047,9 +2678,12 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         case "operand":
             text = data.kind == .separator ? "" : data.operand
             alignment = .right
+        case "note":
+            text = data.annotation
+            alignment = .right
         default:
             text = data.kind == .separator ? separatorLineText(totalWidth: max(8, calcColumnChars - 2)) : data.calc
-            alignment = .right
+            alignment = (data.kind == .note || data.kind == .text) ? .left : .right
         }
 
         let id = NSUserInterfaceItemIdentifier("cell-\(tableColumn?.identifier.rawValue ?? "calc")")
@@ -2061,16 +2695,31 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             label.alignment = alignment
             let colId = tableColumn?.identifier.rawValue
             let isEditingCalcCell = (colId == "calc") && (editingCommittedRow == row)
-            label.isEditable = isEditingCalcCell
-            label.isSelectable = isEditingCalcCell
+            let isEditingExistingNoteRow = isNoteModeActive
+                && noteEditingRow == row
+                && row >= 0
+                && row < committedRows.count
+            let isExistingNoteEditingCell = isEditingExistingNoteRow
+                && colId == "note"
+            let isDraftNoteEditingCell = isNoteModeActive && noteEditingRow == nil && row == draftRowIndex() && colId == "note"
+            let isEditingExistingTextRow = isTextModeActive
+                && textEditingRow == row
+                && row >= 0
+                && row < committedRows.count
+            let isExistingTextEditingCell = isEditingExistingTextRow && colId == "calc"
+            let isDraftTextEditingCell = isTextModeActive && textEditingRow == nil && row == draftRowIndex() && colId == "calc"
+            let isEditingTextCell = isEditingCalcCell || isExistingNoteEditingCell || isDraftNoteEditingCell || isExistingTextEditingCell || isDraftTextEditingCell
+            label.isEditable = isEditingTextCell
+            label.isSelectable = isEditingTextCell
             label.isBordered = false
-            label.drawsBackground = false
             label.focusRingType = .none
             label.delegate = self
             label.target = self
             label.action = #selector(commitEditingFromField(_:))
             if colId == "calc" {
-                label.font = data.kind == .separator ? compactCellFont : calcCellFont
+                label.font = (data.kind == .separator || data.kind == .note || data.kind == .text) ? compactCellFont : calcCellFont
+            } else if colId == "note" {
+                label.font = compactCellFont
             } else if colId == "operand" {
                 label.font = operandCellFont
             } else {
@@ -2080,8 +2729,20 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 label.textColor = .secondaryLabelColor
             } else if data.kind == .separator {
                 label.textColor = NSColor(calibratedWhite: 0.22, alpha: 0.72)
+            } else if tableColumn?.identifier.rawValue == "note" || data.kind == .note || data.kind == .text {
+                label.textColor = NSColor(calibratedWhite: 0.22, alpha: 1.0)
+            } else if colId == "calc", let parsed = TapeFormatter.parseLocaleAwareDecimal(data.calc), parsed < 0 {
+                label.textColor = NSColor.systemRed
             } else {
                 label.textColor = cellColor
+            }
+            if isEditingTextCell {
+                label.drawsBackground = true
+                label.backgroundColor = NSColor(calibratedWhite: 1.0, alpha: 0.96)
+                label.textColor = .labelColor
+            } else {
+                label.drawsBackground = false
+                label.backgroundColor = .clear
             }
             reused.wantsLayer = true
             reused.layer?.backgroundColor = highlightColor.cgColor
@@ -2090,16 +2751,31 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             let label = NSTextField(string: text)
             let colId = tableColumn?.identifier.rawValue
             let isEditingCalcCell = (colId == "calc") && (editingCommittedRow == row)
-            label.isEditable = isEditingCalcCell
-            label.isSelectable = isEditingCalcCell
+            let isEditingExistingNoteRow = isNoteModeActive
+                && noteEditingRow == row
+                && row >= 0
+                && row < committedRows.count
+            let isExistingNoteEditingCell = isEditingExistingNoteRow
+                && colId == "note"
+            let isDraftNoteEditingCell = isNoteModeActive && noteEditingRow == nil && row == draftRowIndex() && colId == "note"
+            let isEditingExistingTextRow = isTextModeActive
+                && textEditingRow == row
+                && row >= 0
+                && row < committedRows.count
+            let isExistingTextEditingCell = isEditingExistingTextRow && colId == "calc"
+            let isDraftTextEditingCell = isTextModeActive && textEditingRow == nil && row == draftRowIndex() && colId == "calc"
+            let isEditingTextCell = isEditingCalcCell || isExistingNoteEditingCell || isDraftNoteEditingCell || isExistingTextEditingCell || isDraftTextEditingCell
+            label.isEditable = isEditingTextCell
+            label.isSelectable = isEditingTextCell
             label.isBordered = false
-            label.drawsBackground = false
             label.focusRingType = .none
             label.delegate = self
             label.target = self
             label.action = #selector(commitEditingFromField(_:))
             if colId == "calc" {
-                label.font = data.kind == .separator ? compactCellFont : calcCellFont
+                label.font = (data.kind == .separator || data.kind == .note || data.kind == .text) ? compactCellFont : calcCellFont
+            } else if colId == "note" {
+                label.font = compactCellFont
             } else if colId == "operand" {
                 label.font = operandCellFont
             } else {
@@ -2109,11 +2785,22 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 label.textColor = .secondaryLabelColor
             } else if data.kind == .separator {
                 label.textColor = NSColor(calibratedWhite: 0.22, alpha: 0.72)
+            } else if colId == "note" || data.kind == .note || data.kind == .text {
+                label.textColor = NSColor(calibratedWhite: 0.22, alpha: 1.0)
+            } else if colId == "calc", let parsed = TapeFormatter.parseLocaleAwareDecimal(data.calc), parsed < 0 {
+                label.textColor = NSColor.systemRed
             } else {
                 label.textColor = cellColor
             }
+            if isEditingTextCell {
+                label.drawsBackground = true
+                label.backgroundColor = NSColor(calibratedWhite: 1.0, alpha: 0.96)
+                label.textColor = .labelColor
+            } else {
+                label.drawsBackground = false
+                label.backgroundColor = .clear
+            }
             label.alignment = alignment
-            label.backgroundColor = .clear
             label.translatesAutoresizingMaskIntoConstraints = false
             label.lineBreakMode = .byClipping
 

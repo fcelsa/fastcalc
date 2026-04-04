@@ -56,11 +56,9 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
         self.menuBarController = menuBar
 
         let hotKey = HotKeyMonitor()
-        let hotKeyBound = hotKey.registerF16 { [weak self] in
-            self?.toggleWindow()
-        }
+        let hotKeyBound = registerConfiguredHotKey(using: hotKey)
         if !hotKeyBound {
-            print("[fastcalc] Warning: impossibile registrare la hotkey F16")
+            print("[fastcalc] Warning: impossibile registrare la hotkey configurata")
         }
         self.hotKeyMonitor = hotKey
 
@@ -76,6 +74,25 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
     @objc
     private func settingsDidChange() {
         applyActivationPolicyFromSettings()
+        if let hotKeyMonitor {
+            _ = registerConfiguredHotKey(using: hotKeyMonitor)
+        }
+        installMainMenu()
+    }
+
+    private func registerConfiguredHotKey(using monitor: HotKeyMonitor) -> Bool {
+        let configured = settingsStore.loadFormattingSettings().globalHotKey
+        let bound = monitor.register(configured) { [weak self] in
+            self?.toggleWindow()
+        }
+
+        if !bound {
+            return monitor.register(.f16) { [weak self] in
+                self?.toggleWindow()
+            }
+        }
+
+        return true
     }
 
     private func applyActivationPolicyFromSettings() {
@@ -140,6 +157,7 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
 
     private func installMainMenu() {
         let mainMenu = NSMenu()
+        let hotKeyName = settingsStore.loadFormattingSettings().globalHotKey.displayName
 
         let appMenuItem = NSMenuItem()
         mainMenu.addItem(appMenuItem)
@@ -224,7 +242,7 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
         let viewMenu = NSMenu(title: "Vista")
         viewMenuItem.submenu = viewMenu
 
-        let toggleItem = NSMenuItem(title: "Visualizza/Nascondi (F16)", action: #selector(toggleFromMenu(_:)), keyEquivalent: "")
+        let toggleItem = NSMenuItem(title: "Visualizza/Nascondi (\(hotKeyName))", action: #selector(toggleFromMenu(_:)), keyEquivalent: "")
         toggleItem.target = self
         viewMenu.addItem(toggleItem)
 

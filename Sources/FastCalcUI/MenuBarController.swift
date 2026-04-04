@@ -55,7 +55,9 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
     private func rebuildMenu(_ menu: NSMenu) {
         menu.removeAllItems()
 
-        let toggleItem = NSMenuItem(title: "Visualizza/Nascondi (F16)", action: #selector(toggle), keyEquivalent: "")
+        let hotKeyName = settingsStore.loadFormattingSettings().globalHotKey.displayName
+
+        let toggleItem = NSMenuItem(title: "Visualizza/Nascondi (\(hotKeyName))", action: #selector(toggle), keyEquivalent: "")
         toggleItem.target = self
         menu.addItem(toggleItem)
 

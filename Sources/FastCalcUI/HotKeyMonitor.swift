@@ -16,7 +16,7 @@ public final class HotKeyMonitor {
     }
 
     @discardableResult
-    public func registerF16(_ callback: @escaping @MainActor () -> Void) -> Bool {
+    public func register(_ hotKey: GlobalHotKey, callback: @escaping @MainActor () -> Void) -> Bool {
         unregister()
         self.callback = callback
 
@@ -59,8 +59,8 @@ public final class HotKeyMonitor {
 
         let hotKeyID = EventHotKeyID(signature: hotKeySignature, id: hotKeyIdentifier)
         let hotKeyStatus = RegisterEventHotKey(
-            UInt32(kVK_F16),
-            UInt32(0),
+            hotKey.keyCode,
+            hotKey.carbonModifiers,
             hotKeyID,
             GetApplicationEventTarget(),
             0,
@@ -73,7 +73,6 @@ public final class HotKeyMonitor {
 
         return true
     }
-
     public func unregister() {
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
