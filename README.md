@@ -62,6 +62,7 @@ The script:
 
 ## Keyboard Controls
 
+- Global toggle hotkey: recordable in Settings (custom key + modifiers, default `F16`)
 - `0-9`, `.`, `,`: numeric input
 - `+`, `-`, `*`, `/`, `x`: operators
 - `D`: delta percentuale (variazione % tra due valori)
@@ -71,20 +72,26 @@ The script:
 - `M`: add GT to FIFO memory
 - `R`: recall FIFO memory as operand number
 - `S`: voice-read the numeric value on the selected row
-- Global toggle hotkey: recordable in Settings (custom key + modifiers, default `F16`)
 - `Backspace`: delete one character from current draft input
 - `Delete` (single press): reset current calculation
 - `Delete` (double press within threshold): full clear (including roll)
+- `Cmd`+`Z` full clear undo 
 - `Up` / `Down`: move editable row selection
 - `Home` / `End`: jump to first/last editable row
 - `Enter` on an editable committed row: edit row value
 - `Enter` on a `#` row: edit text value (non numeric)
+- `N`: add short note (tag, label or call it whatever) on the selected row.
 - `Esc` while editing: cancel edit
 
-Text rows (`#`) accepted characters:
+Text rows (`#`) and label (`N`) accepted characters:
 - letters and numbers
 - spaces and common punctuation
 - tabs/newlines/control characters are sanitized (removed or normalized)
+
+All row with input operand are editable, recalculation is performed only for the relevant portion; also percent operation can be edited in the result row, for exampe:
+73 + 10% = 80,3 
+difference is 7,3 and this row can be edited and will see difference % update.
+
 
 ## Tests
 
@@ -108,10 +115,16 @@ Place app assets (for example an `.icns` icon) in the `resources/` directory.
 - `Tests/FastCalcCoreTests`: unit tests for engine and delete tracker
 
 ## TODO List
-- Add configurable global hotkey
-- Add delta % difference calculation
+- ~~Add configurable global hotkey~~
+- ~~Add delta % difference calculation~~
 - Add power and square root calculation ?? It's really needed ??
-- Miscellaneous... 
+- Implement macro/functions management (`F` Key ?)
+- Adjust copy as image for a entire roll 
+- Adjust code for i18n and prepare for fast and easy l10n
+- Improve status bar behaviour and functionality 
+- Remove row numbering on separator — — — —
+- Add save/load functionality 
+- Fix the bug when delta % calculation are edited
 
 ## License
 
