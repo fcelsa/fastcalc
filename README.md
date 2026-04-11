@@ -19,7 +19,7 @@ It runs as a menu bar utility, supports a global hotkey, and keeps both window s
 
 ## Requirements
 
-- macOS 14+
+- macOS 12+
 - Swift 6.2 toolchain
 - Xcode or Command Line Tools
 
@@ -113,6 +113,23 @@ Place app assets (for example an `.icns` icon) in the `resources/` directory.
 - `Sources/FastCalcUI`: app controller, window/menu bar UI, settings, formatting
 - `Sources/fastcalc`: executable entry point
 - `Tests/FastCalcCoreTests`: unit tests for engine and delete tracker
+
+## Publishing a Release
+
+- Tag the release locally, build and package the app (build creates both `.zip` and `.dmg`):
+
+```bash
+# create an annotated tag and push it
+git tag -a v1.2.3 -m "Release v1.2.3"
+git push origin v1.2.3
+
+# build and package
+./release.sh v1.2.3
+```
+
+- The `release.sh` script will attempt to use the GitHub CLI (`gh`) to create a GitHub Release and upload the generated `dist/*.zip` and `dist/*.dmg`. If `gh` is not installed it will leave artifacts in `dist/` and print the `gh` command to run manually.
+
+- Requirements for publishing: a pushed tag, signed binaries (the packaging script performs ad-hoc signing; for App Store or notarization use proper signing identities), and optionally `gh` configured with appropriate permissions.
 
 ## TODO List
 - ~~Add configurable global hotkey~~

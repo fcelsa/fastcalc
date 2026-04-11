@@ -12,7 +12,7 @@ DIST_DIR="${ROOT_DIR}/dist"
 BUILD_ARM_DIR="${ROOT_DIR}/.build-arm64"
 BUILD_X86_DIR="${ROOT_DIR}/.build-x86_64"
 APP_DIR="${DIST_DIR}/${BUNDLE_NAME}"
-BINARY_PATH="${APP_DIR}/Contents/MacOS/${APP_NAME}"
+BINARY_PATH="${APP_DIR}/Contents/MacOS/${EXECUTABLE_NAME}"
 PLIST_PATH="${APP_DIR}/Contents/Info.plist"
 ZIP_PATH="${DIST_DIR}/${ZIP_NAME}"
 ICON_SOURCE_PATH="${ROOT_DIR}/resources/${ICON_FILE_NAME}"
@@ -52,21 +52,25 @@ fi
 
 printf "Versione: %s\nBuild: %s\n" "${APP_VERSION}" "${BUILD_NUMBER}"
 
+# DMG name depends on APP_VERSION; define it after APP_VERSION is known
+DMG_NAME="${APP_NAME}-${APP_VERSION}-macOS-universal.dmg"
+DMG_PATH="${DIST_DIR}/${DMG_NAME}"
+
 printf "\n==> Scrittura Info.plist\n"
 cat > "${PLIST_PATH}" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>FastCalc</string>
-  <key>CFBundleDisplayName</key><string>FastCalc</string>
+  <key>CFBundleName</key><string>${APP_NAME}</string>
+  <key>CFBundleDisplayName</key><string>${APP_NAME}</string>
   <key>CFBundleIdentifier</key><string>com.fastcalc.app</string>
-  <key>CFBundleIconFile</key><string>fastcalc.icns</string>
-  <key>CFBundleExecutable</key><string>FastCalc</string>
+  <key>CFBundleIconFile</key><string>${ICON_FILE_NAME}</string>
+  <key>CFBundleExecutable</key><string>${EXECUTABLE_NAME}</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${APP_VERSION}</string>
   <key>CFBundleVersion</key><string>${BUILD_NUMBER}</string>
-  <key>LSMinimumSystemVersion</key><string>14.0</string>
+  <key>LSMinimumSystemVersion</key><string>12.0</string>
 </dict>
 </plist>
 EOF
@@ -83,6 +87,16 @@ codesign --force --deep --sign - "${APP_DIR}"
 
 printf "\n==> Packaging zip\n"
 ditto -c -k --sequesterRsrc --keepParent "${APP_DIR}" "${ZIP_PATH}"
+
+printf "\n==> Creazione DMG\n"
+# Create a temporary staging folder containing the .app and an Applications symlink
+STAGING_DIR="$(mktemp -d "${ROOT_DIR}/dist/${APP_NAME}.staging.XXXX")"
+cp -R "${APP_DIR}" "${STAGING_DIR}/"
+ln -s /Applications "${STAGING_DIR}/Applications"
+
+# Create compressed DMG (UDZO)
+hdiutil create -volname "${APP_NAME}" -srcfolder "${STAGING_DIR}" -ov -format UDZO "${DMG_PATH}"
+rm -rf "${STAGING_DIR}"
 
 printf "\n==> Verifica architetture binario\n"
 lipo -info "${BINARY_PATH}"
