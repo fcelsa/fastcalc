@@ -131,6 +131,46 @@ git push origin v1.2.3
 
 - Requirements for publishing: a pushed tag, signed binaries (the packaging script performs ad-hoc signing; for App Store or notarization use proper signing identities), and optionally `gh` configured with appropriate permissions.
 
+For a new release with asset only update:
+```bash
+gh release upload vX.Y.Z dist/* --clobber
+```
+
+## Note per utenti che scaricano binari non notarizzati
+
+Se scarichi un `.zip` o `.dmg` dalla sezione `dist/` (o da una release non notarizzata), macOS potrebbe bloccare l'apertura dell'app tramite Gatekeeper. Opzioni sicure e consigli pratici:
+
+- **Verifica il checksum**: confronta l'hash SHA‑256 dell'artefatto scaricato con quello pubblicato dal maintainer prima di aprirlo.
+
+```bash
+# Esempio: calcola SHA-256 del DMG o ZIP scaricato
+shasum -a 256 FastCalc-macOS-universal.zip
+shasum -a 256 FastCalc-1.2.3-macOS-universal.dmg
+```
+
+- **Apri usando il Finder (consigliato per utenti non esperti)**:
+   - Ctrl‑clic (o clic destro) sull'app e scegli "Apri"; nella finestra di dialogo che appare conferma l'apertura.
+   - Se il pulsante "Apri comunque" è richiesto, vai in `Impostazioni di Sistema > Privacy e Sicurezza` e autorizza l'app temporaneamente.
+
+- **Metodi da terminale (per utenti avanzati)**:
+   - Rimuovere l'attributo di quarantena (sblocca l'app):
+
+```bash
+# rimuove l'attributo di quarantena dall'app o dal bundle
+xattr -rd com.apple.quarantine /percorso/alla/FastCalc.app
+```
+
+   - In alternativa aggiungere al sistema come applicazione attendibile (meno consigliato senza firma valida):
+
+```bash
+sudo spctl --add /percorso/alla/FastCalc.app
+```
+
+- **Avvertenze**:
+   - Non disabilitare permanentemente Gatekeeper (`spctl --master-disable`) su macchine di produzione o personali condivise.
+   - Preferisci sempre scaricare artefatti da fonti fidate e verificare checksum/firming prima di concedere permessi.
+
+
 ## TODO List
 - ~~Add configurable global hotkey~~
 - ~~Add delta % difference calculation~~
