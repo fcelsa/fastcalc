@@ -11,9 +11,21 @@ fi
 
 TAG="$1"
 
+PUBLISH_ONLY=0
+TAG_EXISTS_REMOTE=0
+
 if git rev-parse "${TAG}" >/dev/null 2>&1; then
-  echo "Tag ${TAG} already exists locally." >&2
-  exit 1
+  echo "Tag ${TAG} already exists locally."
+  read -r -p "Proceed in publish-only mode (skip git tag/git push)? [y/N] " CONTINUE_PUBLISH_ONLY
+  if [ "${CONTINUE_PUBLISH_ONLY}" != "y" ] && [ "${CONTINUE_PUBLISH_ONLY}" != "Y" ]; then
+    echo "Aborting release."
+    exit 1
+  fi
+  PUBLISH_ONLY=1
+fi
+
+if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+  TAG_EXISTS_REMOTE=1
 fi
 
 # Preflight checks
@@ -48,15 +60,23 @@ else
 fi
 
 # 3) Confirm with user
-read -r -p "Proceed to create and push tag ${TAG} on branch ${BRANCH}? [y/N] " CONFIRM
+if [ "${PUBLISH_ONLY}" -eq 1 ]; then
+  read -r -p "Proceed with build and remote publication for existing tag ${TAG}? [y/N] " CONFIRM
+else
+  read -r -p "Proceed to create and push tag ${TAG} on branch ${BRANCH}? [y/N] " CONFIRM
+fi
 if [ "${CONFIRM}" != "y" ] && [ "${CONFIRM}" != "Y" ]; then
   echo "Aborting release." 
   exit 1
 fi
 
-echo "Creating annotated tag ${TAG}"
-git tag -a "${TAG}" -m "Release ${TAG}"
-git push origin "${TAG}"
+if [ "${PUBLISH_ONLY}" -eq 0 ]; then
+  echo "Creating annotated tag ${TAG}"
+  git tag -a "${TAG}" -m "Release ${TAG}"
+  git push origin "${TAG}"
+else
+  echo "Skipping git tag and git push (publish-only mode)"
+fi
 
 echo "Building artifacts"
 swift build -c release --arch arm64
@@ -76,8 +96,7 @@ echo "${ZIP_SHA}  $(basename "${ZIP}")" > "${ROOT_DIR}/dist/SHA256SUMS"
 echo "${DMG_SHA}  $(basename "${DMG}")" >> "${ROOT_DIR}/dist/SHA256SUMS"
 
 # Prepare release notes including checksums
-NOTES_FILE="$(mktemp)
-"
+NOTES_FILE="$(mktemp)"
 cat > "${NOTES_FILE}" <<EOF
 Release ${TAG}
 
@@ -89,11 +108,22 @@ See dist/SHA256SUMS for the same checksums.
 EOF
 
 if command -v gh >/dev/null 2>&1; then
-  echo "Creating GitHub release ${TAG} and uploading assets (with checksums)"
-  gh release create "${TAG}" "${ZIP}" "${DMG}" "${ROOT_DIR}/dist/SHA256SUMS" --title "${TAG}" --notes-file "${NOTES_FILE}"
+  if gh release view "${TAG}" >/dev/null 2>&1; then
+    echo "GitHub release ${TAG} already exists — uploading/replacing assets"
+    gh release upload "${TAG}" "${ZIP}" "${DMG}" "${ROOT_DIR}/dist/SHA256SUMS" --clobber
+    gh release edit "${TAG}" --notes-file "${NOTES_FILE}"
+  else
+    echo "Creating GitHub release ${TAG} and uploading assets (with checksums)"
+    if [ "${PUBLISH_ONLY}" -eq 1 ] && [ "${TAG_EXISTS_REMOTE}" -eq 0 ]; then
+      echo "Remote tag ${TAG} not found — creating release tag from current commit ${LOCAL}"
+      gh release create "${TAG}" "${ZIP}" "${DMG}" "${ROOT_DIR}/dist/SHA256SUMS" --title "${TAG}" --notes-file "${NOTES_FILE}" --target "${LOCAL}"
+    else
+      gh release create "${TAG}" "${ZIP}" "${DMG}" "${ROOT_DIR}/dist/SHA256SUMS" --title "${TAG}" --notes-file "${NOTES_FILE}"
+    fi
+  fi
   rm -f "${NOTES_FILE}"
 else
-  echo "gh CLI not found — release created locally, artifacts in dist/:"
+  echo "gh CLI not found — remote publication skipped, artifacts available in dist/:"
   echo "  ${ZIP}"
   echo "  ${DMG}"
   echo "Checksums written to dist/SHA256SUMS:" 

@@ -118,25 +118,50 @@ Place app assets (for example an `.icns` icon) in the `resources/` directory.
 
 ## Publishing a Release
 
-- Tag the release locally, build and package the app (build creates both `.zip` and `.dmg`):
+Use:
 
 ```bash
-# create an annotated tag and push it
-git tag -a v1.2.3 -m "Release v1.2.3"
-git push origin v1.2.3
-
-# build and package
 ./release.sh v1.2.3
 ```
 
-- The `release.sh` script will attempt to use the GitHub CLI (`gh`) to create a GitHub Release and upload the generated `dist/*.zip` and `dist/*.dmg`. If `gh` is not installed it will leave artifacts in `dist/` and print the `gh` command to run manually.
+What `release.sh` does:
 
-- Requirements for publishing: a pushed tag, signed binaries (the packaging script performs ad-hoc signing; for App Store or notarization use proper signing identities), and optionally `gh` configured with appropriate permissions.
+1. Runs preflight checks (`swift test`, branch sync with `origin`).
+2. If tag does not exist locally:
+   - asks confirmation,
+   - creates annotated tag,
+   - pushes the tag to `origin`.
+3. If tag already exists locally:
+   - informs: `Tag vX.Y.Z already exists locally.`
+   - asks if you want to continue in publish-only mode,
+   - skips `git tag` and `git push`.
+4. Builds release binaries (`arm64` and `x86_64`) and runs `buildapp.sh`.
+5. Produces artifacts in `dist/` (`.zip`, `.dmg`) and writes `dist/SHA256SUMS`.
+6. If `gh` is available:
+   - creates or updates GitHub Release,
+   - uploads/replaces assets (`--clobber`),
+   - updates release notes with checksums.
+7. If `gh` is not available:
+   - keeps artifacts locally in `dist/`,
+   - prints instructions for manual publication.
 
-For a new release with asset only update:
+Typical workflows:
+
+```bash
+# Standard release (new tag)
+./release.sh v1.2.3
+
+# Tag already exists locally -> choose publish-only when prompted
+./release.sh v1.2.3
+```
+
+Manual asset-only update (optional):
+
 ```bash
 gh release upload vX.Y.Z dist/* --clobber
 ```
+
+Publishing requirements: working `git` remote, valid release tag version, and optionally `gh` authenticated with permissions to create/edit releases.
 
 ## Note per utenti che scaricano binari non notarizzati
 
