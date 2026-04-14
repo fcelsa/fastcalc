@@ -11,6 +11,7 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
     private var settingsWindowController: SettingsWindowController?
     private var menuBarController: MenuBarController?
     private var hotKeyMonitor: HotKeyMonitor?
+    private var lastFocusedAppPID: pid_t?
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         applyActivationPolicyFromSettings()
@@ -24,6 +25,9 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
         )
 
         let windowController = RollWindowController(stateStore: stateStore)
+        windowController.onEscapeFocusReturnRequested = { [weak self] in
+            self?.returnFocusToPreviousAppWithoutHiding()
+        }
         self.windowController = windowController
 
         let menuBar = MenuBarController(
@@ -113,7 +117,57 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
     }
 
     private func toggleWindow() {
-        windowController?.toggleVisibility()
+        guard let windowController, let window = windowController.window else {
+            windowController?.toggleVisibility()
+            return
+        }
+
+        let shouldCapturePreviousFocus = !window.isVisible || !window.isKeyWindow
+        if shouldCapturePreviousFocus {
+            captureCurrentFrontmostApplication()
+        }
+
+        let wasVisibleAndKey = window.isVisible && window.isKeyWindow
+        windowController.toggleVisibility()
+
+        if wasVisibleAndKey {
+            restorePreviousFocusOrFallback(clearTrackedPreviousApp: true)
+        }
+    }
+
+    private func returnFocusToPreviousAppWithoutHiding() {
+        restorePreviousFocusOrFallback(clearTrackedPreviousApp: false)
+    }
+
+    private func captureCurrentFrontmostApplication() {
+        let currentPID = NSRunningApplication.current.processIdentifier
+        guard let frontmostApp = NSWorkspace.shared.frontmostApplication,
+              frontmostApp.processIdentifier != currentPID else {
+            return
+        }
+
+        lastFocusedAppPID = frontmostApp.processIdentifier
+    }
+
+    private func restorePreviousFocusOrFallback(clearTrackedPreviousApp: Bool) {
+        if let pid = lastFocusedAppPID,
+           let app = NSRunningApplication(processIdentifier: pid),
+           app.processIdentifier != NSRunningApplication.current.processIdentifier,
+           app.activate(options: [.activateIgnoringOtherApps]) {
+            if clearTrackedPreviousApp {
+                lastFocusedAppPID = nil
+            }
+            return
+        }
+
+        let finderBundleIdentifier = "com.apple.finder"
+        if let finder = NSRunningApplication.runningApplications(withBundleIdentifier: finderBundleIdentifier).first {
+            _ = finder.activate(options: [.activateIgnoringOtherApps])
+        }
+
+        if clearTrackedPreviousApp {
+            lastFocusedAppPID = nil
+        }
     }
 
     private func openSettings() {

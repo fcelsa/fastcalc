@@ -277,6 +277,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private static let totalSeparatorGlyph = "—"
     private static let defaultVersion = "1.0"
 
+    public var onEscapeFocusReturnRequested: (@MainActor () -> Void)?
+
     public init(stateStore: AppStateStore) {
         self.stateStore = stateStore
         self.settingsStore = .shared
@@ -1921,6 +1923,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 return true
             }
             handleResult(.enter)
+            return true
+        case 53: // escape
+            onEscapeFocusReturnRequested?()
             return true
         default:
             break

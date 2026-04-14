@@ -4,6 +4,8 @@ FastCalc is a lightweight macOS calculator designed for fast keyboard input and 
 
 It runs as a menu bar utility, supports a global hotkey, and keeps both window state and tape content between launches.
 
+It doesn't have a typical on-screen input interface (numeric keypad and functions); this is its unique minimalist feature.
+
 ## Features
 
 - Menu bar app with quick show/hide toggle
@@ -62,11 +64,10 @@ The script:
 
 ## Keyboard Controls
 
-- Global toggle hotkey: recordable in Settings (custom key + modifiers, default `F16`)
+- Global toggle hotkey: recordable in Settings (custom key + modifiers, default `F16`) show/hide the interface and return the focus to the calling application (fallback on Finder/Desktop) `Esc` on normal operation do the same, without hiding application.
 - `0-9`, `.`, `,`: numeric input
 - `+`, `-`, `*`, `/`, `x`: operators
-- `D`: delta percentuale (variazione % tra due valori)
-- `#`: inserisce una riga testo (max 20 caratteri) con operatore `#` nella colonna operatori
+- `D`: Percentage delta (% change between two values)
 - `%`: percent conversion
 - `Enter` or `=` or `T`: compute result
 - `M`: add GT to FIFO memory
@@ -81,6 +82,7 @@ The script:
 - `Enter` on an editable committed row: edit row value
 - `Enter` on a `#` row: edit text value (non numeric)
 - `N`: add short note (tag, label or call it whatever) on the selected row.
+- `#`: add text note in the row (marked with `#` on operator column
 - `Esc` while editing: cancel edit
 
 Text rows (`#`) and label (`N`) accepted characters:
