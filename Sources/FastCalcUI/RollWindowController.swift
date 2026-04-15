@@ -551,21 +551,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     public func copyVisibleWindowPNGToClipboard() {
-        guard let window, let contentView = window.contentView else {
-            NSSound.beep()
-            return
-        }
-
-        let bounds = contentView.bounds
-        guard let imageRep = contentView.bitmapImageRepForCachingDisplay(in: bounds) else {
-            NSSound.beep()
-            return
-        }
-
-        imageRep.size = bounds.size
-        contentView.cacheDisplay(in: bounds, to: imageRep)
-
-        guard let pngData = imageRep.representation(using: .png, properties: [:]) else {
+        guard let pngData = makeFullWindowPNGData() else {
             NSSound.beep()
             return
         }
@@ -573,6 +559,95 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setData(pngData, forType: .png)
+    }
+
+    private func makeFullWindowPNGData() -> Data? {
+        guard let offscreenTableView = makeOffscreenSnapshotTableView() else { return nil }
+
+        let documentBounds = offscreenTableView.bounds.integral
+        guard documentBounds.width > 0, documentBounds.height > 0 else { return nil }
+
+        let statusBounds = statusBarView.bounds.integral
+        let compositeWidth = max(documentBounds.width, statusBounds.width)
+        let compositeHeight = documentBounds.height + statusBounds.height
+        guard compositeWidth > 0, compositeHeight > 0 else { return nil }
+
+                guard let documentRep = offscreenTableView.bitmapImageRepForCachingDisplay(in: documentBounds),
+              let statusRep = statusBarView.bitmapImageRepForCachingDisplay(in: statusBounds),
+              let outputRep = NSBitmapImageRep(
+                bitmapDataPlanes: nil,
+                pixelsWide: Int(ceil(compositeWidth)),
+                pixelsHigh: Int(ceil(compositeHeight)),
+                bitsPerSample: 8,
+                samplesPerPixel: 4,
+                hasAlpha: true,
+                isPlanar: false,
+                colorSpaceName: .deviceRGB,
+                bytesPerRow: 0,
+                bitsPerPixel: 0
+              )
+        else {
+            return nil
+        }
+
+        documentRep.size = documentBounds.size
+        statusRep.size = statusBounds.size
+        offscreenTableView.cacheDisplay(in: documentBounds, to: documentRep)
+        statusBarView.cacheDisplay(in: statusBounds, to: statusRep)
+
+        let documentImage = NSImage(size: documentBounds.size)
+        documentImage.addRepresentation(documentRep)
+        let statusImage = NSImage(size: statusBounds.size)
+        statusImage.addRepresentation(statusRep)
+
+        NSGraphicsContext.saveGraphicsState()
+        guard let context = NSGraphicsContext(bitmapImageRep: outputRep) else {
+            NSGraphicsContext.restoreGraphicsState()
+            return nil
+        }
+        NSGraphicsContext.current = context
+
+        NSColor.windowBackgroundColor.setFill()
+        NSRect(x: 0, y: 0, width: compositeWidth, height: compositeHeight).fill()
+
+        // Coordinate system is bottom-left: place status bar at bottom, full tape above it.
+        statusImage.draw(in: NSRect(x: 0, y: 0, width: statusBounds.width, height: statusBounds.height))
+        documentImage.draw(in: NSRect(x: 0, y: statusBounds.height, width: documentBounds.width, height: documentBounds.height))
+
+        NSGraphicsContext.restoreGraphicsState()
+        return outputRep.representation(using: .png, properties: [:])
+    }
+
+    private func makeOffscreenSnapshotTableView() -> TapeTableView? {
+        let rowCount = numberOfRows(in: tableView)
+        let tableWidth = max(1, tableView.bounds.width)
+        let tableHeight = max(totalHeightForDisplayRows(max(rowCount, 1)), tableView.rowHeight)
+
+        let snapshotTable = TapeTableView(frame: NSRect(x: 0, y: 0, width: tableWidth, height: tableHeight))
+        snapshotTable.headerView = nil
+        snapshotTable.usesAlternatingRowBackgroundColors = false
+        snapshotTable.rowHeight = tableView.rowHeight
+        snapshotTable.intercellSpacing = tableView.intercellSpacing
+        snapshotTable.gridStyleMask = tableView.gridStyleMask
+        snapshotTable.backgroundColor = tableView.backgroundColor
+        snapshotTable.focusRingType = .none
+        snapshotTable.selectionHighlightStyle = .none
+        snapshotTable.columnAutoresizingStyle = tableView.columnAutoresizingStyle
+        snapshotTable.delegate = self
+        snapshotTable.dataSource = self
+
+        for sourceColumn in tableView.tableColumns {
+            let copiedColumn = NSTableColumn(identifier: sourceColumn.identifier)
+            copiedColumn.width = sourceColumn.width
+            copiedColumn.minWidth = sourceColumn.minWidth
+            copiedColumn.maxWidth = sourceColumn.maxWidth
+            copiedColumn.resizingMask = sourceColumn.resizingMask
+            snapshotTable.addTableColumn(copiedColumn)
+        }
+
+        snapshotTable.reloadData()
+        snapshotTable.layoutSubtreeIfNeeded()
+        return snapshotTable
     }
 
     public func printTape() {
