@@ -24,6 +24,29 @@ private final class TapeTableView: NSTableView {
     }
 }
 
+private final class TapeSeparatorGraphicView: NSView {
+    override var isFlipped: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard bounds.width > 0 else { return }
+
+        let y = bounds.midY
+        // Keep the separator visually aligned with right-aligned calc values.
+        let rightInset: CGFloat = 6
+        let minLeftInset: CGFloat = 6
+        let desiredLength = max(80, bounds.width * 0.72)
+        let startX = max(minLeftInset, bounds.width - rightInset - desiredLength)
+        let endX = bounds.width - rightInset
+        let path = NSBezierPath()
+        path.move(to: NSPoint(x: startX, y: y))
+        path.line(to: NSPoint(x: endX, y: y))
+        path.lineWidth = 1.0
+        NSColor(calibratedWhite: 0.22, alpha: 0.55).setStroke()
+        path.stroke()
+    }
+}
+
 private final class StatusLedView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -47,6 +70,10 @@ private final class StatusLedView: NSView {
 private struct TapePrintableLine {
     let text: String
     let isNegative: Bool
+    let isSeparator: Bool
+    let calcColumnStart: Int
+    let calcColumnEnd: Int
+    let lineNumberLength: Int
 }
 
 private final class TapePrintPageView: NSView {
@@ -62,7 +89,7 @@ private final class TapePrintPageView: NSView {
     private let headerGap: CGFloat = 18
     private let footerGap: CGFloat = 4
 
-    private let bodyFont = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+    private let bodyFont = NSFont.monospacedSystemFont(ofSize: 9, weight: .regular)
     private let headerFont = NSFont.monospacedSystemFont(ofSize: 8, weight: .semibold)
     private let footerFont = NSFont.monospacedSystemFont(ofSize: 8, weight: .regular)
 
@@ -79,7 +106,7 @@ private final class TapePrintPageView: NSView {
         self.pageSize = pageSize
 
         let measuredLineHeight = ceil(("0" as NSString).size(withAttributes: [.font: bodyFont]).height)
-        self.lineHeight = max(measuredLineHeight + 2, 14)
+        self.lineHeight = max(measuredLineHeight, 11)
 
         let contentHeight = pageSize.height - marginTop - marginBottom - headerGap - footerGap
         self.rowsPerPage = max(1, Int(floor(contentHeight / self.lineHeight)))
@@ -165,6 +192,7 @@ private final class TapePrintPageView: NSView {
         ]
 
         let printableWidth = pageSize.width - marginLeft - marginRight
+        let bodyCharWidth = ("0" as NSString).size(withAttributes: [.font: bodyFont]).width
         let leftHeaderRect = NSRect(x: marginLeft, y: headerTop, width: printableWidth * 0.6, height: 12)
         let rightHeaderRect = NSRect(x: marginLeft + printableWidth * 0.4, y: headerTop, width: printableWidth * 0.6, height: 12)
         headerLeft.draw(in: leftHeaderRect, withAttributes: headerLeftAttributes)
@@ -177,7 +205,26 @@ private final class TapePrintPageView: NSView {
         if firstLineIndex < lastLineIndex {
             for line in lines[firstLineIndex..<lastLineIndex] {
                 let lineRect = NSRect(x: marginLeft, y: y, width: printableWidth, height: lineHeight)
-                line.text.draw(in: lineRect, withAttributes: line.isNegative ? bodyNegativeAttributes : bodyAttributes)
+                if line.isSeparator {
+                    drawSeparator(
+                        in: lineRect,
+                        charWidth: bodyCharWidth,
+                        calcColumnStart: line.calcColumnStart,
+                        calcColumnEnd: line.calcColumnEnd
+                    )
+                } else {
+                    let baseAttributes = line.isNegative ? bodyNegativeAttributes : bodyAttributes
+                    let renderedLine = NSMutableAttributedString(string: line.text, attributes: baseAttributes)
+                    let lineNumberRange = NSRange(location: 0, length: min(line.lineNumberLength, renderedLine.length))
+                    if lineNumberRange.length > 0 {
+                        renderedLine.addAttribute(
+                            .foregroundColor,
+                            value: NSColor(calibratedWhite: 0.50, alpha: 1.0),
+                            range: lineNumberRange
+                        )
+                    }
+                    renderedLine.draw(in: lineRect)
+                }
                 y += lineHeight
             }
         }
@@ -186,15 +233,32 @@ private final class TapePrintPageView: NSView {
         let footerRect = NSRect(x: marginLeft, y: max(contentBottom, pageOriginY + pageSize.height - marginBottom), width: printableWidth, height: 12)
         footerText.draw(in: footerRect, withAttributes: footerAttributes)
     }
+
+    private func drawSeparator(in rect: NSRect, charWidth: CGFloat, calcColumnStart: Int, calcColumnEnd: Int) {
+        let calcStartX = rect.minX + CGFloat(max(0, calcColumnStart)) * charWidth
+        let calcEndX = rect.minX + CGFloat(max(calcColumnStart + 1, calcColumnEnd)) * charWidth
+        let rightInset: CGFloat = 0.5
+        let startX = calcStartX
+        let endX = calcEndX - rightInset
+        let y = rect.midY
+
+        let path = NSBezierPath()
+        path.move(to: NSPoint(x: startX, y: y))
+        path.line(to: NSPoint(x: endX, y: y))
+        path.lineWidth = 0.7
+        NSColor(calibratedWhite: 0.22, alpha: 0.55).setStroke()
+        path.stroke()
+    }
 }
 
 @MainActor
 public final class RollWindowController: NSWindowController, NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate {
     private struct PrintableTapeRow {
-        let lineNumber: Int
+        let lineNumber: Int?
         let calc: String
         let note: String
         let operand: String
+        let isSeparator: Bool
     }
 
     private struct PercentTrace {
@@ -259,8 +323,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         CGFloat(max(0.1, min(1.0, activeSettings.inactiveWindowOpacity)))
     }
     private let statusBarHeight: CGFloat = 22
-    private let defaultRowHeight: CGFloat = 24
-    private let separatorRowHeight: CGFloat = 12
+    private let defaultRowHeight: CGFloat = 21
+    private let separatorRowHeight: CGFloat = 8
+    private let minimumCalcColumnWidth: CGFloat = 120
     private let maxInlineNoteCharacters = 12
     private let maxTextRowCharacters = 20
     private let maxWindowHeightFraction: CGFloat = 0.80
@@ -595,7 +660,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func makePrintablePageView(printInfo: NSPrintInfo) -> TapePrintPageView {
-        let printableRows = makePrintableRows()
+        let printableRows = makePrintableRows(includeSeparatorLineNumbers: false)
         let lines = makePrintableLines(from: printableRows)
         let versionHeader = "FastCalc ver. \(appVersionString())"
         let timestamp = dateTimeFormatter.string(from: Date())
@@ -607,24 +672,37 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         )
     }
 
-    private func makePrintableRows() -> [PrintableTapeRow] {
+    private func makePrintableRows(includeSeparatorLineNumbers: Bool = true) -> [PrintableTapeRow] {
         var rows: [PrintableTapeRow] = []
         rows.reserveCapacity(committedRows.count)
+        var visibleLineNumber = 0
 
         for (index, row) in committedRows.enumerated() {
             if row.kind == .draft {
                 continue
             }
 
+            let isSeparator = row.kind == .separator || row.operand == Self.totalSeparatorMarker
+
             let calcValue: String
-            if row.kind == .separator || row.operand == Self.totalSeparatorMarker {
+            if isSeparator {
                 calcValue = separatorLineText(totalWidth: max(12, calcColumnChars))
             } else {
                 calcValue = row.calc
             }
 
+            let lineNumber: Int?
+            if includeSeparatorLineNumbers {
+                lineNumber = index + 1
+            } else if isSeparator {
+                lineNumber = nil
+            } else {
+                visibleLineNumber += 1
+                lineNumber = visibleLineNumber
+            }
+
             let operandValue = row.operand == Self.totalSeparatorMarker ? "" : row.operand
-            rows.append(PrintableTapeRow(lineNumber: index + 1, calc: calcValue, note: row.annotation, operand: operandValue))
+            rows.append(PrintableTapeRow(lineNumber: lineNumber, calc: calcValue, note: row.annotation, operand: operandValue, isSeparator: isSeparator))
         }
 
         return rows
@@ -633,23 +711,44 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func makePrintableLines(from rows: [PrintableTapeRow]) -> [TapePrintableLine] {
         let calcColumnWidth = max(rows.map(\.calc.count).max() ?? 1, calcColumnChars)
         let noteColumnWidth = max(rows.map(\.note.count).max() ?? 1, noteColumnChars)
-        let lineColumnWidth = max(rows.last.map { String($0.lineNumber).count } ?? 1, 2)
+        let lineColumnWidth = max(rows.compactMap(\.lineNumber).map { String($0).count }.max() ?? 1, 2)
 
         var lines: [TapePrintableLine] = []
         lines.reserveCapacity(max(rows.count, 1))
         if rows.isEmpty {
-            lines.append(TapePrintableLine(text: "0", isNegative: false))
+            lines.append(
+                TapePrintableLine(
+                    text: "0",
+                    isNegative: false,
+                    isSeparator: false,
+                    calcColumnStart: 0,
+                    calcColumnEnd: 1,
+                    lineNumberLength: 0
+                )
+            )
             return lines
         }
 
         for row in rows {
-            let lineNumber = leftPadded(String(row.lineNumber), toLength: lineColumnWidth)
+            let lineNumber = row.lineNumber.map { leftPadded(String($0), toLength: lineColumnWidth) }
+                ?? String(repeating: " ", count: lineColumnWidth)
             let note = leftPadded(row.note, toLength: noteColumnWidth)
             let calc = leftPadded(row.calc, toLength: calcColumnWidth)
             let operand = leftPadded(row.operand, toLength: 2)
             let lineText = "\(lineNumber)  \(note)  \(calc)  \(operand)"
+            let calcColumnStart = lineNumber.count + 2 + note.count + 2
+            let calcColumnEnd = calcColumnStart + calc.count
             let isNegative = TapeFormatter.parseLocaleAwareDecimal(row.calc).map { $0 < 0 } ?? false
-            lines.append(TapePrintableLine(text: lineText, isNegative: isNegative))
+            lines.append(
+                TapePrintableLine(
+                    text: lineText,
+                    isNegative: isNegative,
+                    isSeparator: row.isSeparator,
+                    calcColumnStart: calcColumnStart,
+                    calcColumnEnd: calcColumnEnd,
+                    lineNumberLength: lineNumber.count
+                )
+            )
         }
 
         return lines
@@ -1123,9 +1222,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func setupView() {
         guard let contentView = window?.contentView else { return }
 
-        let calcFont = NSFont.monospacedSystemFont(ofSize: 16, weight: .regular)
+        let calcFont = NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
         let smallFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
-        let operandFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        let operandFont = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
         let textColor = NSColor(calibratedRed: 0.12, green: 0.12, blue: 0.10, alpha: 1.0)
         let paperColor = NSColor(calibratedRed: 0.98, green: 0.97, blue: 0.92, alpha: 1.0)
 
@@ -1133,7 +1232,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         tableView.usesAlternatingRowBackgroundColors = false
         tableView.rowHeight = defaultRowHeight
         tableView.gridStyleMask = []
-        tableView.intercellSpacing = NSSize(width: 0, height: 1)
+        tableView.intercellSpacing = NSSize(width: 0, height: 0)
         tableView.backgroundColor = paperColor
         tableView.focusRingType = .none
         tableView.selectionHighlightStyle = .none
@@ -1165,7 +1264,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
         let calcCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("calc"))
         calcCol.width = max(220, CGFloat(calcColumnChars) * calcCharWidth + 24)
-        calcCol.minWidth = 1
+        calcCol.minWidth = minimumCalcColumnWidth
         calcCol.resizingMask = .autoresizingMask
 
         tableView.addTableColumn(specialCol)
@@ -1405,7 +1504,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let fixed = tableView.tableColumns.filter { $0 !== col }.reduce(0) { $0 + $1.width }
         let spacing = CGFloat(tableView.tableColumns.count - 1) * tableView.intercellSpacing.width
         let remaining = available - fixed - spacing - operandRightPadding
-        let newWidth = max(1, remaining)
+        let newWidth = max(col.minWidth, remaining)
         if abs(col.width - newWidth) > 0.5 {
             col.width = newWidth
         }
@@ -2660,6 +2759,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let rows = displayRows()
         guard row >= 0 && row < rows.count else { return nil }
         let data = rows[row]
+        let columnId = tableColumn?.identifier.rawValue ?? "calc"
+
+        if data.kind == .separator, columnId == "calc" {
+            return makeSeparatorGraphicCell(in: tableView, highlightColor: isSelectableSelectionRow(index: row, rows: rows) && markerSelectedRow == row
+                ? markerHighlightColor(for: data, index: row)
+                : NSColor(calibratedRed: 0.90, green: 0.86, blue: 0.78, alpha: 0.35))
+        }
+
         let isCursorRow = markerSelectedRow == row && isSelectableSelectionRow(index: row, rows: rows)
         let baseRowColor: NSColor = data.kind == .separator
             ? NSColor(calibratedRed: 0.90, green: 0.86, blue: 0.78, alpha: 0.35)
@@ -2672,9 +2779,11 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         switch tableColumn?.identifier.rawValue {
         case "special":
             let cursorMark = isCursorRow ? ">" : ""
-            if data.kind != .draft {
+            if data.kind == .separator {
+                text = cursorMark
+            } else if data.kind != .draft {
                 let allRows = displayRows()
-                let count = allRows[0...row].filter { $0.kind != .draft }.count
+                let count = allRows[0...row].filter { $0.kind != .draft && $0.kind != .separator }.count
                 text = cursorMark + String(count)
             } else {
                 text = cursorMark
@@ -2835,5 +2944,31 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         let bottomY = max(0, documentHeight - visibleHeight)
         clipView.scroll(to: NSPoint(x: 0, y: bottomY))
         scrollView.reflectScrolledClipView(clipView)
+    }
+
+    private func makeSeparatorGraphicCell(in tableView: NSTableView, highlightColor: NSColor) -> NSTableCellView {
+        let id = NSUserInterfaceItemIdentifier("separator-calc-cell")
+        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? {
+            let created = NSTableCellView()
+            created.identifier = id
+
+            let line = TapeSeparatorGraphicView(frame: .zero)
+            line.translatesAutoresizingMaskIntoConstraints = false
+            line.wantsLayer = true
+            line.layer?.backgroundColor = .clear
+            created.addSubview(line)
+
+            NSLayoutConstraint.activate([
+                line.leadingAnchor.constraint(equalTo: created.leadingAnchor),
+                line.trailingAnchor.constraint(equalTo: created.trailingAnchor),
+                line.topAnchor.constraint(equalTo: created.topAnchor),
+                line.bottomAnchor.constraint(equalTo: created.bottomAnchor)
+            ])
+            return created
+        }()
+
+        cell.wantsLayer = true
+        cell.layer?.backgroundColor = highlightColor.cgColor
+        return cell
     }
 }
