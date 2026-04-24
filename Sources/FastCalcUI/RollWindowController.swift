@@ -841,6 +841,12 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         if row.kind == .text || row.operand == "#" {
             return "textRow"
         }
+        if row.kind == .total {
+            return "totalResult"
+        }
+        if row.kind == .result {
+            return "result"
+        }
         if row.operand == Self.totalSeparatorMarker {
             return "separator"
         }

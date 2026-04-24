@@ -203,12 +203,12 @@ sudo spctl --add /percorso/alla/FastCalc.app
 - ~~Add delta % difference calculation~~
 - Add power and square root calculation ?? It's really needed ??
 - Implement macro/functions management (`F` Key ?)
-- Adjust copy as image for a entire roll 
+- ~~Adjust copy as image for a entire roll~~
 - Adjust code for i18n and prepare for fast and easy l10n
 - Improve status bar behaviour and functionality 
-- Remove row numbering on separator — — — —
+- ~~Remove row numbering on separator — — — —~~
 - Add save/load functionality 
-- Fix the bug when delta % calculation are edited
+- ~~Fix the bug when delta % calculation are edited~~
 
 ## License
 
