@@ -1,0 +1,20 @@
+"help.title" = "Quick help";
+
+"help.section.input" = "INPUT";
+"help.section.multifunction" = "MULTI-FUNCTION";
+"help.section.calc" = "CALCULATION & MEMORY";
+"help.section.edit" = "EDIT";
+
+"help.line.numeric" = "- 0-9 , . : numeric input";
+"help.line.operators" = "- + - * / D %% : operators and percentages";
+"help.line.p" = "- P : powers and square root popover";
+"help.line.f" = "- F : user functions popover";
+"help.line.h" = "- H : show/hide this help";
+"help.line.popover.select" = "- 1..9 / arrows / Enter / Esc : popover selection";
+"help.line.result" = "- Enter or = or T : result";
+"help.line.fifo" = "- M / R : FIFO totalizer";
+"help.line.backspace" = "- Backspace : delete one character";
+"help.line.delete" = "- Delete x2 : full reset";
+"help.line.optionDelete" = "- Option + Delete x2 : reset + position";
+"help.line.undo" = "- Cmd+Z : undo full clear";
+"help.empty" = "No commands available.";

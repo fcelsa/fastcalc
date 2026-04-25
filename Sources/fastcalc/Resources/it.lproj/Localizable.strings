@@ -1,0 +1,20 @@
+"help.title" = "Guida rapida";
+
+"help.section.input" = "INPUT";
+"help.section.multifunction" = "MULTIFUNZIONE";
+"help.section.calc" = "CALCOLO E MEMORIA";
+"help.section.edit" = "MODIFICA";
+
+"help.line.numeric" = "- 0-9 , . : input numerico";
+"help.line.operators" = "- + - * / D %% : operatori e percentuali";
+"help.line.p" = "- P : popover potenze e radice";
+"help.line.f" = "- F : popover funzioni utente";
+"help.line.h" = "- H : mostra/nasconde questa guida";
+"help.line.popover.select" = "- 1..9 / frecce / Enter / Esc : selezione nel popover";
+"help.line.result" = "- Enter o = o T : risultato";
+"help.line.fifo" = "- M / R : FIFO totalizer";
+"help.line.backspace" = "- Backspace : cancella un carattere";
+"help.line.delete" = "- Delete x2 : reset completo";
+"help.line.optionDelete" = "- Option + Delete x2 : reset + posizione";
+"help.line.undo" = "- Cmd+Z : undo full clear";
+"help.empty" = "Nessun comando disponibile.";

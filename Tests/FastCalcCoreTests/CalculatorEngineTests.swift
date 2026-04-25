@@ -354,6 +354,62 @@ struct CalculatorEngineTests {
         #expect(result.value == Decimal(15))
     }
 
+    // Potenza con esponente intero negativo: 2^-3 = 0.125
+    @Test func powerWithNegativeIntegerExponentIsComputed() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("2")
+        _ = engine.inputCharacter("^")
+        _ = engine.inputCharacter("-")
+        _ = engine.inputCharacter("3")
+
+        let result = engine.pressResult(.equals)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(string: "0.125"))
+    }
+
+    // Potenza con esponente non intero è invalida: il valore resta invariato
+    @Test func powerWithNonIntegerExponentKeepsBaseValue() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("9")
+        _ = engine.inputCharacter("^")
+        _ = engine.inputCharacter("0")
+        _ = engine.inputCharacter(".")
+        _ = engine.inputCharacter("5")
+
+        let result = engine.pressResult(.enter)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(9))
+    }
+
+    // Radice quadrata è un operatore unario: usa il primo operando senza richiederne un secondo
+    @Test func squareRootUnaryOperatorComputesOnResult() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("8")
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("√")
+
+        let result = engine.pressResult(.equals)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(9))
+    }
+
+    // Con radice pendente, eventuale input destro viene ignorato (operatore unario)
+    @Test func squareRootIgnoresRightOperandInput() {
+        let engine = CalculatorEngine()
+
+        _ = engine.inputCharacter("8")
+        _ = engine.inputCharacter("1")
+        _ = engine.inputCharacter("√")
+        _ = engine.inputCharacter("4")
+
+        let result = engine.pressResult(.enter)
+        #expect(result.kind == .result)
+        #expect(result.value == Decimal(9))
+    }
+
     // Con sottrazione pendente e nessun nuovo input, invio deve confermare il parziale corrente
     @Test func pendingSubtractionWithoutRightOperandKeepsCurrentPartial() {
         let engine = CalculatorEngine()

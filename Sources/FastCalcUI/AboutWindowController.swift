@@ -69,8 +69,8 @@ public final class AboutWindowController: NSWindowController {
             ?? (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String)
             ?? ProcessInfo.processInfo.processName
 
-        let shortVersion = (bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "1.0.0"
-        let buildVersion = (bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "1"
+        let shortVersion = (bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "Debug session"
+        let buildVersion = (bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "swift run"
 
         appNameLabel.stringValue = appName
         descriptionLabel.stringValue = "Calcolatrice veloce con tape e stampa PDF"

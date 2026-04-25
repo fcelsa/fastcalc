@@ -120,10 +120,101 @@ enum TapeFormatter {
     }
 
     static func parseLocaleAwareDecimal(_ raw: String) -> Decimal? {
-        let normalized = raw
-            .replacingOccurrences(of: "'", with: "")
-            .replacingOccurrences(of: ",", with: ".")
+        guard let normalized = normalizedDecimalString(from: raw) else {
+            return nil
+        }
         return Decimal(string: normalized)
+    }
+
+    static func normalizedDecimalString(from raw: String) -> String? {
+        let stripped = raw
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{00A0}", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "'", with: "")
+
+        guard !stripped.isEmpty else { return nil }
+
+        let sign: String
+        let unsigned: String
+        if stripped.hasPrefix("-") {
+            sign = "-"
+            unsigned = String(stripped.dropFirst())
+        } else if stripped.hasPrefix("+") {
+            sign = ""
+            unsigned = String(stripped.dropFirst())
+        } else {
+            sign = ""
+            unsigned = stripped
+        }
+
+        guard !unsigned.isEmpty else { return nil }
+        guard unsigned.allSatisfy({ $0.isNumber || $0 == "." || $0 == "," }) else {
+            return nil
+        }
+
+        let separatorIndexes = unsigned.indices.filter { unsigned[$0] == "." || unsigned[$0] == "," }
+        let decimalIndex = inferredDecimalSeparatorIndex(in: unsigned, separatorIndexes: separatorIndexes)
+
+        var digits = ""
+        var hasDecimalSeparator = false
+
+        for index in unsigned.indices {
+            let char = unsigned[index]
+            if char.isNumber {
+                digits.append(char)
+            } else if index == decimalIndex, !hasDecimalSeparator {
+                digits.append(".")
+                hasDecimalSeparator = true
+            }
+        }
+
+        guard !digits.isEmpty else { return nil }
+
+        if digits.hasPrefix(".") {
+            digits = "0" + digits
+        }
+
+        if digits.hasSuffix(".") {
+            digits.removeLast()
+        }
+
+        guard !digits.isEmpty else { return nil }
+        return sign + digits
+    }
+
+    private static func inferredDecimalSeparatorIndex(in raw: String, separatorIndexes: [String.Index]) -> String.Index? {
+        guard !separatorIndexes.isEmpty else { return nil }
+
+        let commaIndexes = separatorIndexes.filter { raw[$0] == "," }
+        let dotIndexes = separatorIndexes.filter { raw[$0] == "." }
+
+        if let lastComma = commaIndexes.last, let lastDot = dotIndexes.last {
+            return lastComma > lastDot ? lastComma : lastDot
+        }
+
+        guard let separator = separatorIndexes.first.map({ raw[$0] }) else {
+            return nil
+        }
+
+        if separatorIndexes.count == 1 {
+            return separatorIndexes[0]
+        }
+
+        let parts = raw.split(separator: separator, omittingEmptySubsequences: false)
+        guard let lastPart = parts.last else { return separatorIndexes.last }
+        let middleParts = parts.dropFirst().dropLast()
+        let middleLookLikeGroups = middleParts.allSatisfy { $0.count == 3 }
+
+        if lastPart.count == 3, middleLookLikeGroups {
+            return nil
+        }
+
+        if middleLookLikeGroups {
+            return separatorIndexes.last
+        }
+
+        return separatorIndexes.last
     }
 
     private static func integerDigits(in value: Decimal) -> Int {

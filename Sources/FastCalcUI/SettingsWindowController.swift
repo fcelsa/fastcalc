@@ -2,13 +2,62 @@ import AppKit
 import Carbon.HIToolbox
 
 @MainActor
-public final class SettingsWindowController: NSWindowController {
+/// Preferences window controller for formatting, window behavior and user-defined functions.
+///
+/// The controller keeps a draft for general settings that is committed on OK, while user-defined
+/// functions are autosaved to match the expected macOS inspector workflow.
+public final class SettingsWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate {
+    private static let functionRowPasteboardType = NSPasteboard.PasteboardType("fastcalc.userfunction.row")
+
+    private enum Section: Int {
+        case general = 0
+        case functions = 1
+    }
+
+    private enum Metrics {
+        static let windowSize = NSSize(width: 640, height: 560)
+        static let contentInsets = NSEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
+        static let rowSpacing: CGFloat = 12
+        static let sectionSpacing: CGFloat = 10
+        static let labelColumnWidth: CGFloat = 120
+        static let rowLabelSpacing: CGFloat = 16
+        static let controlColumnWidth: CGFloat = 332
+        static let generalSectionLeadingInset: CGFloat = 16
+        static let inlineControlSpacing: CGFloat = 10
+        static let inlineGroupSpacing: CGFloat = 20
+        static let formFieldWidth: CGFloat = 280
+        static let functionListWidth: CGFloat = 240
+        static let functionListHeight: CGFloat = 480
+        static let sliderWidth: CGFloat = 120
+        static let hotKeyDisplayWidth: CGFloat = 150
+        static let buttonWidth: CGFloat = 86
+    }
+
     private let settingsStore: AppSettingsStore
+
+    /// General settings remain staged until the user confirms with OK.
     private var draftSettings = FastCalcFormatSettings()
+
+    /// Functions are edited in-place and autosaved for a more native inspector workflow.
+    private var draftFunctions: [UserDefinedFunction] = []
     private var previewSourceValue: Decimal?
+    private var selectedFunctionIndex: Int?
+    private var hotKeyCaptureMonitor: Any?
+    private var isCapturingHotKey = false
+
+    // MARK: - Shared UI
+
+    private let sectionSelector = NSSegmentedControl(labels: ["Generale", "Funzioni utente"], trackingMode: .selectOne, target: nil, action: nil)
+    private let generalSectionContainer = NSView(frame: .zero)
+    private let functionsSectionContainer = NSView(frame: .zero)
+    private let defaultsButton = NSButton(title: "Default", target: nil, action: nil)
+    private let okButton = NSButton(title: "OK", target: nil, action: nil)
+
+    // MARK: - General tab UI
 
     private let decimalsPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let roundingPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let previewValueLabel = NSTextField(labelWithString: "")
     private let allSpacesCheckbox = NSButton(checkboxWithTitle: "Visibile in tutti gli Spaces", target: nil, action: nil)
     private let defaultScreenPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let defaultScreenHintLabel = NSTextField(labelWithString: "")
@@ -19,21 +68,28 @@ public final class SettingsWindowController: NSWindowController {
     private let hotKeyCaptureButton = NSButton(title: "Registra", target: nil, action: nil)
     private let hotKeyResetButton = NSButton(title: "Default", target: nil, action: nil)
     private let hotKeyHintLabel = NSTextField(labelWithString: "")
-    private let previewValueLabel = NSTextField(labelWithString: "")
+    private let menuBarIconCheckbox = NSButton(checkboxWithTitle: "Icona menu", target: nil, action: nil)
+    private let dockIconCheckbox = NSButton(checkboxWithTitle: "Icona nel Dock", target: nil, action: nil)
     private let activeOpacitySlider = NSSlider(value: 90, minValue: 10, maxValue: 100, target: nil, action: nil)
     private let activeOpacityLabel = NSTextField(labelWithString: "")
     private let inactiveOpacitySlider = NSSlider(value: 50, minValue: 10, maxValue: 100, target: nil, action: nil)
     private let inactiveOpacityLabel = NSTextField(labelWithString: "")
-    private let defaultsButton = NSButton(title: "Default", target: nil, action: nil)
-    private let okButton = NSButton(title: "OK", target: nil, action: nil)
-    private var hotKeyCaptureMonitor: Any?
-    private var isCapturingHotKey = false
+
+    // MARK: - Functions tab UI
+
+    private let functionsTableView = NSTableView(frame: .zero)
+    private let functionListActionsControl = NSSegmentedControl(frame: .zero)
+    private let functionNameField = NSTextField(string: "")
+    private let functionNoteField = NSTextField(string: "")
+    private let functionExpressionField = NSTextField(string: "")
+    private let functionResultOnlyCheckbox = NSButton(checkboxWithTitle: "Result only", target: nil, action: nil)
+    private let functionHintLabel = NSTextField(labelWithString: "")
 
     public init(settingsStore: AppSettingsStore = .shared) {
         self.settingsStore = settingsStore
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 400),
+            contentRect: NSRect(origin: .zero, size: Metrics.windowSize),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -44,6 +100,7 @@ public final class SettingsWindowController: NSWindowController {
 
         super.init(window: window)
 
+        configureWindow()
         setupView()
         loadFromSettings()
     }
@@ -53,8 +110,10 @@ public final class SettingsWindowController: NSWindowController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// Presents the window with the latest settings from persistent storage.
     public func present() {
         loadFromSettings()
+        window?.center()
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -62,191 +121,505 @@ public final class SettingsWindowController: NSWindowController {
 
     public func setPreviewSourceValue(_ value: Decimal?) {
         previewSourceValue = value
+        updatePreview()
     }
 
+    // MARK: - Setup
+
+    /// Configures the window-level defaults that should not change at runtime.
+    private func configureWindow() {
+        window?.defaultButtonCell = okButton.cell as? NSButtonCell
+    }
+
+    /// Builds the full preferences UI using a shared footer and two switchable content panes.
     private func setupView() {
         guard let contentView = window?.contentView else { return }
 
-        // MARK: – Helpers
-
-        func lbl(_ text: String, size: CGFloat = 13) -> NSTextField {
-            let l = NSTextField(labelWithString: text)
-            l.font = .systemFont(ofSize: size)
-            l.setContentHuggingPriority(.required, for: .horizontal)
-            l.setContentCompressionResistancePriority(.required, for: .horizontal)
-            return l
-        }
-
-        func hRow(_ views: [NSView], spacing: CGFloat = 6) -> NSStackView {
-            let s = NSStackView(views: views)
-            s.orientation = .horizontal
-            s.alignment = .centerY
-            s.spacing = spacing
-            return s
-        }
-
-        func configurePopup(_ popup: NSPopUpButton, minimumWidth: CGFloat) {
-            popup.setContentHuggingPriority(.required, for: .horizontal)
-            popup.setContentCompressionResistancePriority(.required, for: .horizontal)
-            popup.widthAnchor.constraint(greaterThanOrEqualToConstant: minimumWidth).isActive = true
-        }
-
-        // MARK: – Decimali / arrotondamento / anteprima
-
-        decimalsPopup.addItems(withTitles: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "FL"])
-        decimalsPopup.target = self
-        decimalsPopup.action = #selector(decimalsChanged)
-        configurePopup(decimalsPopup, minimumWidth: 60)
-
-        roundingPopup.addItems(withTitles: ["Difetto", "Medio", "Eccesso"])
-        roundingPopup.target = self
-        roundingPopup.action = #selector(roundingChanged)
-        configurePopup(roundingPopup, minimumWidth: 112)
-
-        previewValueLabel.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
-        previewValueLabel.textColor = .secondaryLabelColor
-        previewValueLabel.alignment = .left
-        previewValueLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        let formatRow = hRow([
-            lbl("Decimali"), decimalsPopup,
-            lbl("Arrotondamento"), roundingPopup,
-            lbl("Esempio"), previewValueLabel
-        ], spacing: 10)
-
-        // MARK: – Separatore
-
-        let separator = NSBox()
-        separator.boxType = .separator
-
-        // MARK: – Comportamento finestra
-
-        allSpacesCheckbox.target = self
-        allSpacesCheckbox.action = #selector(windowBehaviorChanged)
-        allSpacesCheckbox.setContentHuggingPriority(.required, for: .horizontal)
-        let allSpacesTrailer = NSView()
-        allSpacesTrailer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        let allSpacesRow = hRow([allSpacesCheckbox, allSpacesTrailer])
-
-        defaultScreenPopup.target = self
-        defaultScreenPopup.action = #selector(windowBehaviorChanged)
-        configurePopup(defaultScreenPopup, minimumWidth: 132)
-        let screenRow = hRow([lbl("Schermo di default"), defaultScreenPopup])
-
-        defaultScreenHintLabel.font = .systemFont(ofSize: 11)
-        defaultScreenHintLabel.textColor = .secondaryLabelColor
-        defaultScreenHintLabel.alignment = .left
-
-        floatingWindowCheckbox.target = self
-        floatingWindowCheckbox.action = #selector(windowBehaviorChanged)
-        floatingWindowCheckbox.setContentHuggingPriority(.required, for: .horizontal)
-        alwaysOnTopCheckbox.target = self
-        alwaysOnTopCheckbox.action = #selector(windowBehaviorChanged)
-        alwaysOnTopCheckbox.setContentHuggingPriority(.required, for: .horizontal)
-        let floatingTrailer = NSView()
-        floatingTrailer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        let floatingRow = hRow([floatingWindowCheckbox, alwaysOnTopCheckbox, floatingTrailer], spacing: 12)
-
-        startupModePopup.addItems(withTitles: ["Default", "Nascosta", "Visibile"])
-        startupModePopup.target = self
-        startupModePopup.action = #selector(windowBehaviorChanged)
-        configurePopup(startupModePopup, minimumWidth: 110)
-        let startupRow = hRow([lbl("Apertura all'avvio"), startupModePopup])
-
-        hotKeyValueLabel.font = .monospacedSystemFont(ofSize: 13, weight: .medium)
-        hotKeyValueLabel.alignment = .left
-        hotKeyValueLabel.setContentHuggingPriority(.required, for: .horizontal)
-        hotKeyCaptureButton.target = self
-        hotKeyCaptureButton.action = #selector(toggleHotKeyCapture)
-        hotKeyCaptureButton.bezelStyle = .rounded
-        hotKeyResetButton.target = self
-        hotKeyResetButton.action = #selector(resetHotKeyToDefault)
-        hotKeyResetButton.bezelStyle = .rounded
-        let hotKeyTrailer = NSView()
-        hotKeyTrailer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        let hotKeyRow = hRow([lbl("Hotkey globale"), hotKeyValueLabel, hotKeyCaptureButton, hotKeyResetButton, hotKeyTrailer], spacing: 8)
-
-        hotKeyHintLabel.font = .systemFont(ofSize: 11)
-        hotKeyHintLabel.textColor = .secondaryLabelColor
-        hotKeyHintLabel.alignment = .left
-        hotKeyHintLabel.lineBreakMode = .byWordWrapping
-        hotKeyHintLabel.maximumNumberOfLines = 2
-
-        // MARK: – Slider opacità
-
-        let opLabelWidth: CGFloat = 112
-
-        activeOpacitySlider.target = self
-        activeOpacitySlider.action = #selector(opacityChanged)
-        activeOpacitySlider.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        activeOpacityLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
-        activeOpacityLabel.alignment = .right
-        activeOpacityLabel.textColor = .secondaryLabelColor
-        activeOpacityLabel.setContentHuggingPriority(.required, for: .horizontal)
-        let activeLbl = lbl("Opacità attiva")
-        activeLbl.widthAnchor.constraint(equalToConstant: opLabelWidth).isActive = true
-        let activeOpRow = hRow([activeLbl, activeOpacitySlider, activeOpacityLabel])
-
-        inactiveOpacitySlider.target = self
-        inactiveOpacitySlider.action = #selector(opacityChanged)
-        inactiveOpacitySlider.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        inactiveOpacityLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
-        inactiveOpacityLabel.alignment = .right
-        inactiveOpacityLabel.textColor = .secondaryLabelColor
-        inactiveOpacityLabel.setContentHuggingPriority(.required, for: .horizontal)
-        let inactiveLbl = lbl("Opacità inattiva")
-        inactiveLbl.widthAnchor.constraint(equalToConstant: opLabelWidth).isActive = true
-        let inactiveOpRow = hRow([inactiveLbl, inactiveOpacitySlider, inactiveOpacityLabel])
-
-        // MARK: – Bottone OK
-
-        let spacer = NSView()
-        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        defaultsButton.target = self
-        defaultsButton.action = #selector(resetToDefaults)
-        defaultsButton.bezelStyle = .rounded
-        defaultsButton.widthAnchor.constraint(equalToConstant: 84).isActive = true
-        okButton.target = self
-        okButton.action = #selector(confirmAndClose)
-        okButton.keyEquivalent = "\r"
-        okButton.bezelStyle = .rounded
-        okButton.widthAnchor.constraint(equalToConstant: 84).isActive = true
-        let buttonRow = hRow([spacer, defaultsButton, okButton], spacing: 8)
-
-        // MARK: – Root stack verticale
+        configureSharedControls()
+        configureGeneralControls()
+        configureFunctionsControls()
 
         let root = NSStackView()
         root.orientation = .vertical
         root.alignment = .width
-        root.spacing = 18
-        root.edgeInsets = NSEdgeInsets(top: 14, left: 18, bottom: 14, right: 18)
+        root.spacing = 14
+        root.edgeInsets = Metrics.contentInsets
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        for view in [
-            formatRow, separator,
-            allSpacesRow, screenRow,
-            floatingRow, startupRow, hotKeyRow, hotKeyHintLabel,
-            activeOpRow, inactiveOpRow,
-            buttonRow
-        ] as [NSView] {
-            root.addArrangedSubview(view)
+        let sectionHost = NSView(frame: .zero)
+        sectionHost.translatesAutoresizingMaskIntoConstraints = false
+
+        generalSectionContainer.translatesAutoresizingMaskIntoConstraints = false
+        functionsSectionContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        let generalView = buildGeneralSectionView()
+        let functionsView = buildFunctionsSectionView()
+        generalSectionContainer.addSubview(generalView)
+        functionsSectionContainer.addSubview(functionsView)
+
+        NSLayoutConstraint.activate([
+            generalView.leadingAnchor.constraint(equalTo: generalSectionContainer.leadingAnchor),
+            generalView.trailingAnchor.constraint(equalTo: generalSectionContainer.trailingAnchor),
+            generalView.topAnchor.constraint(equalTo: generalSectionContainer.topAnchor),
+            generalView.bottomAnchor.constraint(equalTo: generalSectionContainer.bottomAnchor),
+            functionsView.leadingAnchor.constraint(equalTo: functionsSectionContainer.leadingAnchor),
+            functionsView.trailingAnchor.constraint(equalTo: functionsSectionContainer.trailingAnchor),
+            functionsView.topAnchor.constraint(equalTo: functionsSectionContainer.topAnchor),
+            functionsView.bottomAnchor.constraint(equalTo: functionsSectionContainer.bottomAnchor)
+        ])
+
+        for sectionView in [generalSectionContainer, functionsSectionContainer] {
+            sectionHost.addSubview(sectionView)
+            NSLayoutConstraint.activate([
+                sectionView.leadingAnchor.constraint(equalTo: sectionHost.leadingAnchor),
+                sectionView.trailingAnchor.constraint(equalTo: sectionHost.trailingAnchor),
+                sectionView.topAnchor.constraint(equalTo: sectionHost.topAnchor),
+                sectionView.bottomAnchor.constraint(equalTo: sectionHost.bottomAnchor)
+            ])
         }
-        root.setCustomSpacing(12, after: formatRow)
-        root.setCustomSpacing(12, after: activeOpRow)
+
+        let sectionSelectorRow = buildSectionSelectorRow()
+        let headerSeparator = makeSeparator()
+
+        root.addArrangedSubview(sectionSelectorRow)
+        root.addArrangedSubview(headerSeparator)
+        root.addArrangedSubview(sectionHost)
+        root.addArrangedSubview(buildFooterRow())
+        root.setCustomSpacing(8, after: sectionSelectorRow)
+        root.setCustomSpacing(10, after: headerSeparator)
 
         contentView.addSubview(root)
         NSLayoutConstraint.activate([
             root.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             root.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             root.topAnchor.constraint(equalTo: contentView.topAnchor),
-            root.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            root.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            sectionHost.heightAnchor.constraint(greaterThanOrEqualToConstant: 400)
         ])
 
-        window?.defaultButtonCell = okButton.cell as? NSButtonCell
+        updateVisibleSection()
     }
 
+    /// Builds the general settings pane with grouped form rows aligned on a shared label column.
+    private func buildGeneralSectionView() -> NSView {
+        let formattingRows = buildFormRows(rows: [
+            ("Decimali", decimalsPopup),
+            ("Arrotondamento", buildRoundingPreviewRow())
+        ], controlWidth: nil)
+
+        let behaviorRows = buildFormRows(rows: [
+            ("Vista", buildCheckboxRow([allSpacesCheckbox, floatingWindowCheckbox, alwaysOnTopCheckbox])),
+            (nil, buildStartupAndScreenRow())
+        ], controlWidth: nil)
+
+        let interactionRows = buildFormRows(rows: [
+            (nil, buildOpacityControlsRow()),
+            (nil, buildIconVisibilityRow()),
+            ("Hotkey globale", buildHotKeyRow())
+        ], controlWidth: nil)
+
+        let content = NSStackView(views: [
+            formattingRows,
+            makeSeparator(),
+            behaviorRows,
+            buildHintRow(defaultScreenHintLabel),
+            interactionRows,
+            buildHintRow(hotKeyHintLabel)
+        ])
+        content.orientation = .vertical
+        content.alignment = .width
+        content.spacing = Metrics.sectionSpacing
+        content.translatesAutoresizingMaskIntoConstraints = false
+
+        let container = NSView(frame: .zero)
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: Metrics.generalSectionLeadingInset),
+            content.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor),
+            content.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            content.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor)
+        ])
+        return container
+    }
+
+    /// Builds the functions pane as a split inspector inspired by Terminal profiles.
+    private func buildFunctionsSectionView() -> NSView {
+        let listScrollView = NSScrollView(frame: .zero)
+        listScrollView.translatesAutoresizingMaskIntoConstraints = false
+        listScrollView.borderType = .bezelBorder
+        listScrollView.hasVerticalScroller = true
+        listScrollView.hasHorizontalScroller = false
+        listScrollView.drawsBackground = false
+        listScrollView.documentView = functionsTableView
+        listScrollView.widthAnchor.constraint(equalToConstant: Metrics.functionListWidth).isActive = true
+        listScrollView.heightAnchor.constraint(equalToConstant: Metrics.functionListHeight).isActive = true
+
+        let controlsBar = NSStackView(views: [functionListActionsControl])
+        controlsBar.orientation = .horizontal
+        controlsBar.alignment = .centerY
+        controlsBar.spacing = 0
+
+        let sidebar = NSStackView(views: [listScrollView, makeSeparator(), controlsBar])
+        sidebar.orientation = .vertical
+        sidebar.alignment = .width
+        sidebar.spacing = 8
+
+        let inspectorRows = buildFormRows(rows: [
+            ("Nome", functionNameField),
+            ("Nota", functionNoteField),
+            ("Calcolo", functionExpressionField),
+            (nil, functionResultOnlyCheckbox)
+        ])
+
+        let inspector = NSStackView(views: [inspectorRows, buildHintRow(functionHintLabel, indent: 0)])
+        inspector.orientation = .vertical
+        inspector.alignment = .width
+        inspector.spacing = 12
+        inspector.widthAnchor.constraint(equalToConstant: Metrics.controlColumnWidth + Metrics.labelColumnWidth + 16).isActive = true
+
+        let split = NSStackView(views: [sidebar, inspector])
+        split.orientation = .horizontal
+        split.alignment = .top
+        split.spacing = 18
+        split.translatesAutoresizingMaskIntoConstraints = false
+
+        let container = NSView(frame: .zero)
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(split)
+        NSLayoutConstraint.activate([
+            split.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: Metrics.generalSectionLeadingInset),
+            split.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor),
+            split.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            split.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor)
+        ])
+        return container
+    }
+
+    /// Creates the centered section switcher shown at the top of the window.
+    private func buildSectionSelectorRow() -> NSView {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        sectionSelector.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(sectionSelector)
+        NSLayoutConstraint.activate([
+            sectionSelector.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            sectionSelector.topAnchor.constraint(equalTo: container.topAnchor),
+            sectionSelector.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        return container
+    }
+
+    /// Creates the trailing footer row shared by both panes.
+    private func buildFooterRow() -> NSView {
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return buildHorizontalRow([spacer, defaultsButton, okButton], spacing: 8)
+    }
+
+    // MARK: - Control configuration
+
+    private func configureSharedControls() {
+        sectionSelector.target = self
+        sectionSelector.action = #selector(sectionChanged)
+        sectionSelector.selectedSegment = Section.general.rawValue
+        sectionSelector.segmentStyle = .rounded
+        sectionSelector.setWidth(156, forSegment: Section.general.rawValue)
+        sectionSelector.setWidth(156, forSegment: Section.functions.rawValue)
+        if let generalImage = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: "Generale") {
+            sectionSelector.setImage(generalImage, forSegment: Section.general.rawValue)
+        }
+        if let functionsImage = NSImage(systemSymbolName: "function", accessibilityDescription: "Funzioni") {
+            sectionSelector.setImage(functionsImage, forSegment: Section.functions.rawValue)
+        }
+
+        defaultsButton.target = self
+        defaultsButton.action = #selector(resetToDefaults)
+        defaultsButton.bezelStyle = .rounded
+        defaultsButton.widthAnchor.constraint(equalToConstant: Metrics.buttonWidth).isActive = true
+
+        okButton.target = self
+        okButton.action = #selector(confirmAndClose)
+        okButton.keyEquivalent = "\r"
+        okButton.bezelStyle = .rounded
+        okButton.widthAnchor.constraint(equalToConstant: Metrics.buttonWidth).isActive = true
+    }
+
+    private func configureGeneralControls() {
+        configurePopup(decimalsPopup, minimumWidth: 72)
+        decimalsPopup.addItems(withTitles: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "FL"])
+        decimalsPopup.target = self
+        decimalsPopup.action = #selector(decimalsChanged)
+
+        configurePopup(roundingPopup, minimumWidth: 120)
+        roundingPopup.addItems(withTitles: ["Difetto", "Medio", "Eccesso"])
+        roundingPopup.target = self
+        roundingPopup.action = #selector(roundingChanged)
+
+        previewValueLabel.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
+        previewValueLabel.textColor = .secondaryLabelColor
+
+        allSpacesCheckbox.target = self
+        allSpacesCheckbox.action = #selector(windowBehaviorChanged)
+
+        configurePopup(defaultScreenPopup, minimumWidth: 150)
+        defaultScreenPopup.target = self
+        defaultScreenPopup.action = #selector(windowBehaviorChanged)
+
+        defaultScreenHintLabel.font = .systemFont(ofSize: 11)
+        defaultScreenHintLabel.textColor = .secondaryLabelColor
+
+        floatingWindowCheckbox.target = self
+        floatingWindowCheckbox.action = #selector(windowBehaviorChanged)
+
+        alwaysOnTopCheckbox.target = self
+        alwaysOnTopCheckbox.action = #selector(windowBehaviorChanged)
+
+        configurePopup(startupModePopup, minimumWidth: 110)
+        startupModePopup.addItems(withTitles: ["Default", "Nascosta", "Visibile"])
+        startupModePopup.target = self
+        startupModePopup.action = #selector(windowBehaviorChanged)
+
+        hotKeyValueLabel.font = .monospacedSystemFont(ofSize: 13, weight: .medium)
+        hotKeyValueLabel.alignment = .left
+        hotKeyValueLabel.lineBreakMode = .byTruncatingTail
+        hotKeyValueLabel.setContentHuggingPriority(.required, for: .horizontal)
+        hotKeyValueLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        hotKeyValueLabel.widthAnchor.constraint(equalToConstant: Metrics.hotKeyDisplayWidth).isActive = true
+
+        hotKeyCaptureButton.target = self
+        hotKeyCaptureButton.action = #selector(toggleHotKeyCapture)
+        hotKeyCaptureButton.bezelStyle = .rounded
+        hotKeyResetButton.target = self
+        hotKeyResetButton.action = #selector(resetHotKeyToDefault)
+        hotKeyResetButton.bezelStyle = .rounded
+
+        menuBarIconCheckbox.isEnabled = false
+        dockIconCheckbox.isEnabled = false
+        menuBarIconCheckbox.toolTip = "Comportamento non ancora implementato."
+        dockIconCheckbox.toolTip = "Comportamento non ancora implementato."
+
+        hotKeyHintLabel.font = .systemFont(ofSize: 11)
+        hotKeyHintLabel.textColor = .secondaryLabelColor
+        hotKeyHintLabel.lineBreakMode = .byWordWrapping
+        hotKeyHintLabel.maximumNumberOfLines = 2
+
+        configureOpacityRow(slider: activeOpacitySlider, label: activeOpacityLabel)
+        configureOpacityRow(slider: inactiveOpacitySlider, label: inactiveOpacityLabel)
+    }
+
+    private func configureFunctionsControls() {
+        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("function"))
+        column.width = Metrics.functionListWidth
+        functionsTableView.addTableColumn(column)
+        functionsTableView.delegate = self
+        functionsTableView.dataSource = self
+        functionsTableView.headerView = nil
+        functionsTableView.style = .sourceList
+        functionsTableView.rowSizeStyle = .medium
+        functionsTableView.focusRingType = .none
+        functionsTableView.usesAlternatingRowBackgroundColors = true
+        functionsTableView.backgroundColor = .clear
+        functionsTableView.registerForDraggedTypes([Self.functionRowPasteboardType])
+        functionsTableView.setDraggingSourceOperationMask(.move, forLocal: true)
+        functionsTableView.draggingDestinationFeedbackStyle = .gap
+
+        functionListActionsControl.segmentCount = 2
+        functionListActionsControl.segmentStyle = .texturedRounded
+        functionListActionsControl.trackingMode = .momentary
+        functionListActionsControl.controlSize = .small
+        functionListActionsControl.target = self
+        functionListActionsControl.action = #selector(handleFunctionListAction)
+        functionListActionsControl.setWidth(28, forSegment: 0)
+        functionListActionsControl.setWidth(28, forSegment: 1)
+        functionListActionsControl.setImage(NSImage(named: NSImage.addTemplateName) ?? NSImage(systemSymbolName: "plus", accessibilityDescription: "Aggiungi"), forSegment: 0)
+        functionListActionsControl.setImage(NSImage(named: NSImage.removeTemplateName) ?? NSImage(systemSymbolName: "minus", accessibilityDescription: "Rimuovi"), forSegment: 1)
+
+        functionNameField.placeholderString = "Nome funzione"
+        functionNameField.delegate = self
+        functionNameField.widthAnchor.constraint(greaterThanOrEqualToConstant: Metrics.formFieldWidth).isActive = true
+
+        functionNoteField.placeholderString = "Nota breve (max 12)"
+        functionNoteField.delegate = self
+        functionNoteField.widthAnchor.constraint(greaterThanOrEqualToConstant: 160).isActive = true
+
+        functionExpressionField.placeholderString = "Calcolo con x, es: (x*1.22)+5"
+        functionExpressionField.delegate = self
+        functionExpressionField.widthAnchor.constraint(greaterThanOrEqualToConstant: Metrics.formFieldWidth).isActive = true
+
+        functionResultOnlyCheckbox.target = self
+        functionResultOnlyCheckbox.action = #selector(functionResultOnlyChanged)
+
+        functionHintLabel.font = .systemFont(ofSize: 11)
+        functionHintLabel.textColor = .secondaryLabelColor
+        functionHintLabel.stringValue = "Usa x (o {x}) come operando corrente. Disattiva Result only per sviluppare nel roll solo espressioni digitabili dalla tastiera."
+    }
+
+    // MARK: - View helpers
+
+    private func buildFormRows(rows: [(String?, NSView)], controlWidth: CGFloat? = Metrics.controlColumnWidth) -> NSView {
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.alignment = .width
+        stack.spacing = Metrics.rowSpacing
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        for (title, control) in rows {
+            stack.addArrangedSubview(buildFormRow(title: title, control: control, controlWidth: controlWidth))
+        }
+
+        return stack
+    }
+
+    private func buildFormRow(title: String?, control: NSView, controlWidth: CGFloat? = Metrics.controlColumnWidth) -> NSView {
+        let row = NSStackView()
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = Metrics.rowLabelSpacing
+        row.translatesAutoresizingMaskIntoConstraints = false
+
+        if let title {
+            row.addArrangedSubview(makeFormLabel(title))
+        } else {
+            let spacer = NSView(frame: NSRect(x: 0, y: 0, width: Metrics.labelColumnWidth, height: 1))
+            spacer.translatesAutoresizingMaskIntoConstraints = false
+            spacer.widthAnchor.constraint(equalToConstant: Metrics.labelColumnWidth).isActive = true
+            row.addArrangedSubview(spacer)
+        }
+
+        row.addArrangedSubview(makeControlColumn(control, width: controlWidth))
+
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        row.addArrangedSubview(filler)
+        return row
+    }
+
+    private func buildHorizontalRow(_ views: [NSView], spacing: CGFloat = 10) -> NSStackView {
+        let row = NSStackView(views: views)
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = spacing
+        return row
+    }
+
+    private func buildHintRow(_ label: NSTextField, indent: CGFloat = Metrics.labelColumnWidth + 16) -> NSView {
+        let spacer = NSView(frame: NSRect(x: 0, y: 0, width: indent, height: 1))
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        spacer.widthAnchor.constraint(equalToConstant: indent).isActive = true
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return buildHorizontalRow([spacer, label, filler], spacing: 0)
+    }
+
+    private func buildCheckboxRow(_ checkboxes: [NSButton]) -> NSView {
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return buildHorizontalRow(checkboxes + [filler], spacing: 14)
+    }
+
+    private func buildRoundingPreviewRow() -> NSView {
+        let exampleLabel = makeInlineLabel("Esempio")
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return buildHorizontalRow([roundingPopup, exampleLabel, previewValueLabel, filler], spacing: 12)
+    }
+
+    private func buildStartupAndScreenRow() -> NSView {
+        let startupLabel = makeInlineLabel("Apertura all'avvio")
+        let screenLabel = makeInlineLabel("Schermo di default")
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return buildHorizontalRow([startupLabel, startupModePopup, screenLabel, defaultScreenPopup, filler], spacing: Metrics.inlineControlSpacing)
+    }
+
+    private func buildOpacityControlsRow() -> NSView {
+        activeOpacitySlider.widthAnchor.constraint(equalToConstant: Metrics.sliderWidth).isActive = true
+        inactiveOpacitySlider.widthAnchor.constraint(equalToConstant: Metrics.sliderWidth).isActive = true
+        activeOpacityLabel.widthAnchor.constraint(equalToConstant: 36).isActive = true
+        inactiveOpacityLabel.widthAnchor.constraint(equalToConstant: 36).isActive = true
+
+        let activeLabel = makeInlineLabel("Opacita attiva")
+        let inactiveLabel = makeInlineLabel("Opacita inattiva")
+        let activeGroup = buildHorizontalRow([activeLabel, activeOpacitySlider, activeOpacityLabel], spacing: 8)
+        let inactiveGroup = buildHorizontalRow([inactiveLabel, inactiveOpacitySlider, inactiveOpacityLabel], spacing: 8)
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return buildHorizontalRow([activeGroup, inactiveGroup, filler], spacing: Metrics.inlineGroupSpacing)
+    }
+
+    private func buildIconVisibilityRow() -> NSView {
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return buildHorizontalRow([menuBarIconCheckbox, dockIconCheckbox, filler], spacing: 14)
+    }
+
+    private func buildHotKeyRow() -> NSView {
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let row = buildHorizontalRow([hotKeyCaptureButton, hotKeyResetButton, hotKeyValueLabel, filler], spacing: 8)
+        row.widthAnchor.constraint(equalToConstant: Metrics.controlColumnWidth).isActive = true
+        return row
+    }
+
+    private func makeFormLabel(_ text: String) -> NSTextField {
+        let label = NSTextField(labelWithString: text)
+        label.font = .systemFont(ofSize: 13)
+        label.alignment = .left
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.widthAnchor.constraint(equalToConstant: Metrics.labelColumnWidth).isActive = true
+        return label
+    }
+
+    private func makeInlineLabel(_ text: String) -> NSTextField {
+        let label = NSTextField(labelWithString: text)
+        label.font = .systemFont(ofSize: 12)
+        label.textColor = .secondaryLabelColor
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        return label
+    }
+
+    private func makeControlColumn(_ control: NSView, width: CGFloat?) -> NSView {
+        let filler = NSView()
+        filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let row = buildHorizontalRow([control, filler], spacing: 0)
+        if let width {
+            row.widthAnchor.constraint(equalToConstant: width).isActive = true
+        }
+        return row
+    }
+
+    private func makeSeparator() -> NSView {
+        let separator = NSBox()
+        separator.boxType = .separator
+        return separator
+    }
+
+    private func configurePopup(_ popup: NSPopUpButton, minimumWidth: CGFloat) {
+        popup.setContentHuggingPriority(.required, for: .horizontal)
+        popup.setContentCompressionResistancePriority(.required, for: .horizontal)
+        popup.widthAnchor.constraint(greaterThanOrEqualToConstant: minimumWidth).isActive = true
+    }
+
+    private func configureOpacityRow(slider: NSSlider, label: NSTextField) {
+        slider.target = self
+        slider.action = #selector(opacityChanged)
+        label.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+        label.alignment = .right
+        label.textColor = .secondaryLabelColor
+    }
+
+    // MARK: - State application
+
+    /// Reloads the UI from persisted settings and restores the current function selection when possible.
     private func loadFromSettings() {
         draftSettings = settingsStore.loadFormattingSettings()
+        draftFunctions = draftSettings.userFunctions
+        if draftFunctions.isEmpty {
+            selectedFunctionIndex = nil
+        } else {
+            selectedFunctionIndex = min(selectedFunctionIndex ?? 0, draftFunctions.count - 1)
+        }
         applyDraftToUI()
         updatePreview()
     }
@@ -256,8 +629,7 @@ public final class SettingsWindowController: NSWindowController {
         case .floating:
             decimalsPopup.selectItem(withTitle: "FL")
         case .fixed:
-            let clampedPlaces = max(0, min(8, draftSettings.fixedDecimalPlaces))
-            decimalsPopup.selectItem(withTitle: String(clampedPlaces))
+            decimalsPopup.selectItem(withTitle: String(max(0, min(8, draftSettings.fixedDecimalPlaces))))
         }
 
         switch draftSettings.roundingMode {
@@ -291,18 +663,18 @@ public final class SettingsWindowController: NSWindowController {
         activeOpacitySlider.doubleValue = draftSettings.activeWindowOpacity * 100
         inactiveOpacitySlider.doubleValue = draftSettings.inactiveWindowOpacity * 100
         updateOpacityLabels()
-
         reloadScreenChoices()
+        reloadFunctionsUI()
     }
 
+    /// Copies the current general-pane control values into the draft model.
     private func updateDraftFromUI() {
         if decimalsPopup.titleOfSelectedItem == "FL" {
             draftSettings.decimalMode = .floating
             draftSettings.fixedDecimalPlaces = 2
         } else {
             draftSettings.decimalMode = .fixed
-            let fixedPlaces = Int(decimalsPopup.titleOfSelectedItem ?? "2") ?? 2
-            draftSettings.fixedDecimalPlaces = max(0, min(8, fixedPlaces))
+            draftSettings.fixedDecimalPlaces = max(0, min(8, Int(decimalsPopup.titleOfSelectedItem ?? "2") ?? 2))
         }
 
         switch roundingPopup.indexOfSelectedItem {
@@ -317,6 +689,7 @@ public final class SettingsWindowController: NSWindowController {
         draftSettings.showOnAllSpaces = allSpacesCheckbox.state == .on
         draftSettings.floatingWindowEnabled = floatingWindowCheckbox.state == .on
         draftSettings.alwaysOnTop = alwaysOnTopCheckbox.state == .on
+
         switch startupModePopup.indexOfSelectedItem {
         case 1:
             draftSettings.startupMode = .hidden
@@ -328,19 +701,60 @@ public final class SettingsWindowController: NSWindowController {
 
         draftSettings.activeWindowOpacity = activeOpacitySlider.doubleValue / 100
         draftSettings.inactiveWindowOpacity = inactiveOpacitySlider.doubleValue / 100
-        updateOpacityLabels()
 
         if defaultScreenPopup.isEnabled {
             draftSettings.preferredScreenIndex = max(0, defaultScreenPopup.indexOfSelectedItem)
         } else {
             draftSettings.preferredScreenIndex = nil
         }
+
+        draftSettings.userFunctions = draftFunctions
+    }
+
+    private func updateVisibleSection() {
+        let currentSection = Section(rawValue: sectionSelector.selectedSegment) ?? .general
+        generalSectionContainer.isHidden = currentSection != .general
+        functionsSectionContainer.isHidden = currentSection != .functions
+        defaultsButton.isHidden = currentSection != .general
+    }
+
+    private func reloadFunctionsUI() {
+        functionsTableView.reloadData()
+
+        guard !draftFunctions.isEmpty else {
+            selectedFunctionIndex = nil
+            functionListActionsControl.setEnabled(false, forSegment: 1)
+            populateFunctionInspector(nil)
+            return
+        }
+
+        let row = min(max(selectedFunctionIndex ?? 0, 0), draftFunctions.count - 1)
+        selectedFunctionIndex = row
+        functionListActionsControl.setEnabled(true, forSegment: 1)
+        if functionsTableView.selectedRow != row {
+            functionsTableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        }
+        populateFunctionInspector(draftFunctions[row])
+    }
+
+    private func populateFunctionInspector(_ function: UserDefinedFunction?) {
+        guard let function else {
+            functionNameField.stringValue = ""
+            functionNoteField.stringValue = ""
+            functionExpressionField.stringValue = ""
+            functionResultOnlyCheckbox.state = .off
+            return
+        }
+
+        functionNameField.stringValue = function.label
+        functionNoteField.stringValue = function.note
+        functionExpressionField.stringValue = function.expression
+        functionResultOnlyCheckbox.state = function.resultOnly ? .on : .off
     }
 
     private func reloadScreenChoices() {
         let screens = NSScreen.screens
         defaultScreenPopup.removeAllItems()
-
         for index in screens.indices {
             defaultScreenPopup.addItem(withTitle: "Schermo \(index + 1)")
         }
@@ -362,13 +776,24 @@ public final class SettingsWindowController: NSWindowController {
 
     private func updatePreview() {
         let sample = previewSourceValue ?? Decimal(string: "1234.56789") ?? 0
-        let rendered = TapeFormatter.formatDecimalForColumn(sample, settings: draftSettings)
-        previewValueLabel.stringValue = rendered
+        previewValueLabel.stringValue = TapeFormatter.formatDecimalForColumn(sample, settings: draftSettings)
     }
 
     private func updateOpacityLabels() {
         activeOpacityLabel.stringValue = "\(Int(activeOpacitySlider.doubleValue.rounded()))%"
         inactiveOpacityLabel.stringValue = "\(Int(inactiveOpacitySlider.doubleValue.rounded()))%"
+    }
+
+    private func persistUserFunctions() {
+        draftSettings.userFunctions = draftFunctions
+        settingsStore.saveUserFunctions(draftFunctions)
+    }
+
+    // MARK: - Actions
+
+    @objc
+    private func sectionChanged() {
+        updateVisibleSection()
     }
 
     @objc
@@ -389,6 +814,48 @@ public final class SettingsWindowController: NSWindowController {
     }
 
     @objc
+    private func opacityChanged() {
+        updateDraftFromUI()
+        updateOpacityLabels()
+    }
+
+    @objc
+    private func handleFunctionListAction(_ sender: NSSegmentedControl) {
+        defer { sender.selectedSegment = -1 }
+        switch sender.selectedSegment {
+        case 0:
+            addFunction()
+        case 1:
+            removeSelectedFunction()
+        default:
+            break
+        }
+    }
+
+    private func addFunction() {
+        let function = UserDefinedFunction(label: "Nuova funzione", note: "", expression: "x", resultOnly: true)
+        draftFunctions.append(function)
+        selectedFunctionIndex = draftFunctions.count - 1
+        persistUserFunctions()
+        reloadFunctionsUI()
+        window?.makeFirstResponder(functionNameField)
+    }
+
+    private func removeSelectedFunction() {
+        guard let selectedFunctionIndex else { return }
+        guard selectedFunctionIndex >= 0, selectedFunctionIndex < draftFunctions.count else { return }
+
+        draftFunctions.remove(at: selectedFunctionIndex)
+        if draftFunctions.isEmpty {
+            self.selectedFunctionIndex = nil
+        } else {
+            self.selectedFunctionIndex = min(selectedFunctionIndex, draftFunctions.count - 1)
+        }
+        persistUserFunctions()
+        reloadFunctionsUI()
+    }
+
+    @objc
     private func toggleHotKeyCapture() {
         isCapturingHotKey ? stopHotKeyCapture(cancelled: true) : startHotKeyCapture()
     }
@@ -402,6 +869,37 @@ public final class SettingsWindowController: NSWindowController {
         hotKeyHintLabel.textColor = .secondaryLabelColor
     }
 
+    @objc
+    private func functionResultOnlyChanged() {
+        guard let selectedFunctionIndex else { return }
+        guard selectedFunctionIndex >= 0, selectedFunctionIndex < draftFunctions.count else { return }
+
+        draftFunctions[selectedFunctionIndex].resultOnly = functionResultOnlyCheckbox.state == .on
+        persistUserFunctions()
+        functionsTableView.reloadData(forRowIndexes: IndexSet(integer: selectedFunctionIndex), columnIndexes: IndexSet(integer: 0))
+    }
+
+    @objc
+    private func confirmAndClose() {
+        stopHotKeyCapture(cancelled: true)
+        updateDraftFromUI()
+        settingsStore.saveFormattingSettings(draftSettings)
+        close()
+    }
+
+    @objc
+    private func resetToDefaults() {
+        stopHotKeyCapture(cancelled: true)
+        draftSettings = AppSettingsStore.defaultFormattingSettings
+        draftFunctions = draftSettings.userFunctions
+        selectedFunctionIndex = draftFunctions.isEmpty ? nil : 0
+        applyDraftToUI()
+        updatePreview()
+    }
+
+    // MARK: - Hot key capture
+
+    /// Starts local event capture so the next key combination can be stored as the global shortcut.
     private func startHotKeyCapture() {
         stopHotKeyCapture(cancelled: true)
         isCapturingHotKey = true
@@ -526,7 +1024,6 @@ public final class SettingsWindowController: NSWindowController {
         if hotKey.keyCode == UInt32(kVK_Tab) && hotKey.carbonModifiers == cmd { return true }
         if hotKey.keyCode == UInt32(kVK_ANSI_3) && hotKey.carbonModifiers == cmdShift { return true }
         if hotKey.keyCode == UInt32(kVK_ANSI_4) && hotKey.carbonModifiers == cmdShift { return true }
-
         return false
     }
 
@@ -540,29 +1037,128 @@ public final class SettingsWindowController: NSWindowController {
         if hotKey.keyCode == UInt32(kVK_Space) && hotKey.carbonModifiers == ctrl { return true }
         if hotKey.keyCode == UInt32(kVK_Tab) && hotKey.carbonModifiers == UInt32(cmdKey | shiftKey) { return true }
         if hotKey.keyCode == UInt32(kVK_ANSI_5) && hotKey.carbonModifiers == cmdShift { return true }
-
         return false
     }
 
-    @objc
-    private func opacityChanged() {
-        updateDraftFromUI()
+    // MARK: - NSTextFieldDelegate
+
+    /// Mirrors field edits back into the selected function and persists them immediately.
+    public func controlTextDidChange(_ notification: Notification) {
+        guard let selectedFunctionIndex else { return }
+        guard selectedFunctionIndex >= 0, selectedFunctionIndex < draftFunctions.count else { return }
+
+        let name = functionNameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = String(functionNoteField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).prefix(12))
+        let expression = functionExpressionField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        draftFunctions[selectedFunctionIndex].label = name.isEmpty ? "Nuova funzione" : name
+        draftFunctions[selectedFunctionIndex].note = note
+        draftFunctions[selectedFunctionIndex].expression = expression.isEmpty ? "x" : expression
+        draftFunctions[selectedFunctionIndex].resultOnly = functionResultOnlyCheckbox.state == .on
+
+        if functionNoteField.stringValue != draftFunctions[selectedFunctionIndex].note {
+            functionNoteField.stringValue = draftFunctions[selectedFunctionIndex].note
+        }
+
+        persistUserFunctions()
+        functionsTableView.reloadData(forRowIndexes: IndexSet(integer: selectedFunctionIndex), columnIndexes: IndexSet(integer: 0))
     }
 
-    @objc
-    private func confirmAndClose() {
-        stopHotKeyCapture(cancelled: true)
-        updateDraftFromUI()
-        settingsStore.saveFormattingSettings(draftSettings)
-        close()
+    // MARK: - NSTableViewDataSource / Delegate
+
+    public func numberOfRows(in tableView: NSTableView) -> Int {
+        draftFunctions.count
     }
 
-    @objc
-    private func resetToDefaults() {
-        stopHotKeyCapture(cancelled: true)
-        draftSettings = AppSettingsStore.defaultFormattingSettings
-        applyDraftToUI()
-        updatePreview()
+    public func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        guard tableView === functionsTableView else { return nil }
+        guard row >= 0, row < draftFunctions.count else { return nil }
+
+        let item = NSPasteboardItem()
+        item.setString(String(row), forType: Self.functionRowPasteboardType)
+        return item
     }
 
+    public func tableView(_ tableView: NSTableView, validateDrop info: NSDraggingInfo, proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
+        guard tableView === functionsTableView else { return [] }
+        guard dropOperation == .above else {
+            tableView.setDropRow(row, dropOperation: .above)
+            return .move
+        }
+        return .move
+    }
+
+    public func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
+        guard tableView === functionsTableView else { return false }
+        guard dropOperation == .above else { return false }
+        guard let sourceRowString = info.draggingPasteboard.string(forType: Self.functionRowPasteboardType),
+              let sourceRow = Int(sourceRowString),
+              sourceRow >= 0,
+              sourceRow < draftFunctions.count
+        else {
+            return false
+        }
+
+        var destinationRow = max(0, min(row, draftFunctions.count))
+        if destinationRow > sourceRow {
+            destinationRow -= 1
+        }
+
+        guard destinationRow != sourceRow else { return false }
+
+        let movedFunction = draftFunctions.remove(at: sourceRow)
+        draftFunctions.insert(movedFunction, at: destinationRow)
+        selectedFunctionIndex = destinationRow
+        persistUserFunctions()
+        reloadFunctionsUI()
+        functionsTableView.selectRowIndexes(IndexSet(integer: destinationRow), byExtendingSelection: false)
+        functionsTableView.scrollRowToVisible(destinationRow)
+        populateFunctionInspector(draftFunctions[destinationRow])
+        return true
+    }
+
+    public func tableViewSelectionDidChange(_ notification: Notification) {
+        let selectedRow = functionsTableView.selectedRow
+        guard selectedRow >= 0, selectedRow < draftFunctions.count else {
+            selectedFunctionIndex = nil
+            functionListActionsControl.setEnabled(false, forSegment: 1)
+            populateFunctionInspector(nil)
+            return
+        }
+
+        selectedFunctionIndex = selectedRow
+        functionListActionsControl.setEnabled(true, forSegment: 1)
+        populateFunctionInspector(draftFunctions[selectedRow])
+    }
+
+    public func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        guard row >= 0, row < draftFunctions.count else { return nil }
+
+        let identifier = NSUserInterfaceItemIdentifier("functionCell")
+        let item = draftFunctions[row]
+
+        let cell: NSTableCellView
+        if let reused = tableView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView {
+            cell = reused
+        } else {
+            cell = NSTableCellView(frame: .zero)
+            cell.identifier = identifier
+
+            let label = NSTextField(labelWithString: "")
+            label.translatesAutoresizingMaskIntoConstraints = false
+            label.font = .systemFont(ofSize: 13)
+            label.lineBreakMode = .byTruncatingTail
+            cell.addSubview(label)
+            cell.textField = label
+
+            NSLayoutConstraint.activate([
+                label.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 8),
+                label.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+                label.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+            ])
+        }
+
+        cell.textField?.stringValue = item.note.isEmpty ? item.label : "\(item.label)  [\(item.note)]"
+        return cell
+    }
 }

@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "fastcalc",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v12)
     ],
@@ -27,7 +28,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "fastcalc",
-            dependencies: ["FastCalcUI"]
+            dependencies: ["FastCalcUI"],
+            resources: [
+                .process("Resources")
+            ]
         ),
         .testTarget(
             name: "FastCalcCoreTests",

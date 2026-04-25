@@ -5,6 +5,8 @@ public enum CalculatorOperator: String, Sendable {
     case subtract = "-"
     case multiply = "*"
     case divide = "/"
+    case power = "^"
+    case squareRoot = "√"
     case deltaPercent = "D"
 }
 

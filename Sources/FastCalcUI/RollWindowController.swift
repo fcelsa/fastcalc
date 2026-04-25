@@ -336,6 +336,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private let statusLedView = StatusLedView(frame: .zero)
     private let speechSynthesizer = AVSpeechSynthesizer()
     private let statusLabel = NSTextField(labelWithString: "")
+    private let multiFunctionPopover = MultiFunctionPopoverController()
+    private let helpPopover = HelpPopoverController()
+    private var activeMultiFunctionTrigger: MultiFunctionTrigger?
 
     private static let resetBaselineRow = TapeRow(special: "", calc: "0", operand: "C", kind: .reset)
     private static let totalSeparatorMarker = "__SEP__"
@@ -384,6 +387,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         self.window?.delegate = self
 
         setupView()
+        configureMultiFunctionPopover()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(settingsDidChange),
@@ -457,6 +461,10 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             let target = Self.frameOnScreenBottomRight(screen: preferredScreen, currentSize: window.frame.size)
             window.setFrame(target, display: true, animate: true)
             saveCurrentState(isVisible: window.isVisible)
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.ensureInteractiveFirstResponder()
         }
     }
 
@@ -853,7 +861,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         if row.operand == "C" {
             return "reset"
         }
-        if "+-*/D".contains(row.operand) {
+        if "+-*/D^√".contains(row.operand) {
             return "operator"
         }
         if row.operand == "%" {
@@ -1550,6 +1558,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     public func windowDidBecomeKey(_ notification: Notification) {
+        ensureInteractiveFirstResponder()
         updateInputFocusState()
     }
 
@@ -1561,6 +1570,14 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func updateInputFocusState() {
         hasInputFocus = window?.isKeyWindow ?? false
         updateStatusRow()
+    }
+
+    private func ensureInteractiveFirstResponder() {
+        guard let window, window.isKeyWindow else { return }
+        guard !isNoteModeActive && !isTextModeActive && !isEditingModeActive else { return }
+        if window.firstResponder !== tableView {
+            window.makeFirstResponder(tableView)
+        }
     }
 
     private func updateStatusRow() {
@@ -2015,6 +2032,35 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             return pasteNumericFromClipboardIfAvailable()
         }
 
+        if multiFunctionPopover.isShown {
+            return multiFunctionPopover.handleKeyboardEvent(event)
+        }
+
+        if helpPopover.isShown {
+            if Int(event.keyCode) == 53 || event.charactersIgnoringModifiers?.lowercased() == MultiFunctionTrigger.h.rawValue {
+                helpPopover.close()
+                return true
+            }
+            return true
+        }
+
+        if event.modifierFlags.intersection([.command, .option, .control]).isEmpty,
+           let triggerChar = event.charactersIgnoringModifiers?.lowercased(),
+           triggerChar == MultiFunctionTrigger.h.rawValue
+        {
+            presentHelpPopover()
+            return true
+        }
+
+        if event.modifierFlags.intersection([.command, .option, .control]).isEmpty,
+           let triggerChar = event.charactersIgnoringModifiers?.lowercased(),
+           (triggerChar == MultiFunctionTrigger.p.rawValue || triggerChar == MultiFunctionTrigger.f.rawValue)
+        {
+            let trigger: MultiFunctionTrigger = triggerChar == MultiFunctionTrigger.f.rawValue ? .f : .p
+            presentMultiFunctionPopover(for: trigger)
+            return true
+        }
+
         if let rawChars = event.characters, rawChars.contains("%") {
             handlePercent()
             return true
@@ -2090,7 +2136,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             handleBackspace()
             return true
         case 117: // forward delete
-            handleDelete()
+            let forceResetPlacement = event.modifierFlags.contains(.option)
+            handleDelete(forceResetPlacement: forceResetPlacement)
             return true
         case 36, 76: // enter
             let snapshot = engine.snapshot()
@@ -2140,7 +2187,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
                 handleRecallFromFIFO()
                 continue
             }
-            if "+-*/xXdD".contains(ch) {
+            if "+-*/^xXdD".contains(ch) {
                 handleOperator(ch)
                 continue
             }
@@ -2159,6 +2206,345 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         hasPendingLeadingNegativeSign = false
         updateStatusRow()
         saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func configureMultiFunctionPopover() {
+        multiFunctionPopover.onSelectAction = { [weak self] action in
+            self?.applyMultiFunctionActionSelection(action)
+        }
+        multiFunctionPopover.onDismiss = { [weak self] in
+            guard let self else { return }
+            self.activeMultiFunctionTrigger = nil
+            self.window?.makeFirstResponder(self.tableView)
+        }
+    }
+
+    private func canHandleMultiFunctionTrigger() -> Bool {
+        canHandleMultiFunctionTrigger(for: .p)
+    }
+
+    private func canHandleMultiFunctionTrigger(for trigger: MultiFunctionTrigger) -> Bool {
+        guard !isNoteModeActive && !isTextModeActive && !isEditingModeActive else {
+            return false
+        }
+
+        if trigger == .h {
+            return true
+        }
+
+        guard !draftInput.isEmpty else { return false }
+        return TapeFormatter.parseLocaleAwareDecimal(draftInput) != nil
+    }
+
+    private func presentMultiFunctionPopover(for trigger: MultiFunctionTrigger) {
+        guard canHandleMultiFunctionTrigger(for: trigger) else {
+            NSSound.beep()
+            return
+        }
+        activeMultiFunctionTrigger = trigger
+
+        let actionSet: MultiFunctionActionSet
+        switch trigger {
+        case .p:
+            actionSet = .pMVP
+        case .f:
+            let configuredFunctions = settingsStore.loadFormattingSettings().userFunctions
+            guard !configuredFunctions.isEmpty else {
+                NSSound.beep()
+                return
+            }
+            actionSet = .fActions(configuredFunctions)
+        case .h:
+            return
+        }
+
+        let visibleRect = tableView.visibleRect
+        let draftRow = draftRowIndex()
+        let draftRowRect = tableView.rect(ofRow: draftRow)
+        let calcColumn = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("calc"))
+
+        let anchorX: CGFloat
+        if calcColumn >= 0 {
+            let calcCellRect = tableView.frameOfCell(atColumn: calcColumn, row: draftRow)
+            anchorX = min(max(visibleRect.minX + 8, calcCellRect.maxX - 12), visibleRect.maxX - 8)
+        } else {
+            anchorX = max(8, visibleRect.maxX - 24)
+        }
+
+        let verticalNudgeUp: CGFloat = 7
+        let proposedY = (draftRowRect.isEmpty ? visibleRect.midY : draftRowRect.midY) - verticalNudgeUp
+        let anchorY = min(max(visibleRect.minY + 12, proposedY), visibleRect.maxY - 12)
+        let anchorRect = NSRect(x: anchorX, y: anchorY, width: 1, height: 1)
+        multiFunctionPopover.show(actionSet: actionSet, relativeTo: anchorRect, of: tableView)
+    }
+
+    private func presentHelpPopover() {
+        if helpPopover.isShown {
+            helpPopover.close()
+            return
+        }
+
+        let helpContent = MultiFunctionActionSet.localizedHelpContent()
+
+        let visibleRect = tableView.visibleRect
+        let anchorRect = NSRect(
+            x: visibleRect.maxX - 2,
+            y: visibleRect.midY,
+            width: 1,
+            height: 1
+        )
+        helpPopover.show(title: helpContent.title, lines: helpContent.lines, relativeTo: anchorRect, of: tableView)
+    }
+
+    private func applyMultiFunctionActionSelection(_ action: String) {
+        pendingPercentTrace = nil
+        hasPendingLeadingNegativeSign = false
+
+        if let functionID = MultiFunctionActionKey.customFunctionID(from: action) {
+            applyUserDefinedFunction(functionID: functionID)
+            return
+        }
+
+        switch action {
+        case MultiFunctionActionKey.square:
+            applyImmediatePower(exponent: 2)
+        case MultiFunctionActionKey.cube:
+            applyImmediatePower(exponent: 3)
+        case MultiFunctionActionKey.powerN:
+            _ = commitPowerOperator()
+        case MultiFunctionActionKey.squareRoot:
+            applyImmediateSquareRoot()
+        default:
+            NSSound.beep()
+        }
+    }
+
+    private func applyUserDefinedFunction(functionID: String) {
+        let settings = settingsStore.loadFormattingSettings()
+        guard let function = settings.userFunctions.first(where: { $0.id == functionID }) else {
+            NSSound.beep()
+            return
+        }
+
+        guard let inputValue = TapeFormatter.parseLocaleAwareDecimal(draftInput) else {
+            NSSound.beep()
+            return
+        }
+
+        if function.resultOnly {
+            guard let resultValue = evaluateUserFunction(function.expression, input: inputValue) else {
+                NSSound.beep()
+                return
+            }
+
+            engine.replaceCurrentInput(with: resultValue)
+            let plain = NSDecimalNumber(decimal: resultValue).stringValue
+            draftInput = plain.replacingOccurrences(of: ".", with: ",")
+            draftCursor = draftInput.count
+            reloadTape(moveToDraft: true)
+            saveCurrentState(isVisible: window?.isVisible ?? false)
+            return
+        }
+
+        guard replayUserFunction(function.expression, input: inputValue) else {
+            NSSound.beep()
+            return
+        }
+
+        if !function.note.isEmpty,
+           let lastIndex = committedRows.indices.last
+        {
+            let role = classifyRowRole(committedRows[lastIndex])
+            if role == "result" || role == "totalResult" {
+                committedRows[lastIndex].annotation = String(function.note.prefix(maxInlineNoteCharacters))
+            }
+        }
+
+        reloadTape(moveToDraft: true)
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+    }
+
+    private func replayUserFunction(_ expression: String, input: Decimal) -> Bool {
+        let inputLiteral = NSDecimalNumber(decimal: input).stringValue.replacingOccurrences(of: ".", with: ",")
+        guard let replayExpression = makeReplayExpression(from: expression, inputLiteral: inputLiteral) else {
+            return false
+        }
+
+        draftInput = ""
+        draftCursor = 0
+        hasPendingLeadingNegativeSign = false
+        pendingPercentTrace = nil
+        engine.clearCurrentInput()
+
+        for token in replayExpression {
+            guard applyUserFunctionReplayToken(token) else {
+                return false
+            }
+        }
+
+        handleResult(.equals)
+        return true
+    }
+
+    private func makeReplayExpression(from expression: String, inputLiteral: String) -> String? {
+        let trimmed = expression.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        var replay = trimmed.replacingOccurrences(of: "{x}", with: inputLiteral)
+        replay = substituteStandaloneX(in: replay, with: inputLiteral)
+        guard let normalizedReplay = normalizeUserFunctionNumericLiterals(in: replay, decimalSeparator: ",") else {
+            return nil
+        }
+        replay = normalizedReplay
+        replay = replay.replacingOccurrences(of: " ", with: "")
+
+        guard !replay.isEmpty else { return nil }
+        guard !replay.contains("(") && !replay.contains(")") else { return nil }
+        guard replay.unicodeScalars.allSatisfy({ Self.allowedUserFunctionScalars.contains($0) }) else { return nil }
+
+        if let first = replay.first,
+           "+-*/^%√Dd".contains(first)
+        {
+            replay = inputLiteral + replay
+        }
+
+        return replay
+    }
+
+    private func substituteStandaloneX(in expression: String, with inputLiteral: String) -> String {
+        let pattern = "(?<![A-Za-z0-9_])x(?![A-Za-z0-9_])"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return expression
+        }
+        let nsRange = NSRange(expression.startIndex..<expression.endIndex, in: expression)
+        return regex.stringByReplacingMatches(in: expression, options: [], range: nsRange, withTemplate: inputLiteral)
+    }
+
+    private func normalizeUserFunctionNumericLiterals(in expression: String, decimalSeparator: Character) -> String? {
+        var output = ""
+        var currentNumber = ""
+
+        func flushNumber() -> Bool {
+            guard !currentNumber.isEmpty else { return true }
+            guard let normalized = TapeFormatter.normalizedDecimalString(from: currentNumber) else {
+                return false
+            }
+            output.append(normalized.replacingOccurrences(of: ".", with: String(decimalSeparator)))
+            currentNumber = ""
+            return true
+        }
+
+        for char in expression {
+            if char.isNumber || char == "." || char == "," || char == "'" {
+                currentNumber.append(char)
+            } else {
+                guard flushNumber() else { return nil }
+                output.append(char)
+            }
+        }
+
+        guard flushNumber() else { return nil }
+        return output
+    }
+
+    private func applyUserFunctionReplayToken(_ token: Character) -> Bool {
+        if "0123456789,.".contains(token) {
+            handleDigitLike(token)
+            return true
+        }
+
+        switch token {
+        case "+", "-", "*", "/", "^":
+            handleOperator(token)
+            return true
+        case "D", "d":
+            handleOperator("D")
+            return true
+        case "%":
+            handlePercent()
+            return true
+        case "√":
+            handleOperator("√")
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static let allowedUserFunctionScalars = CharacterSet(charactersIn: "0123456789xX{}.,+-*/^%√Dd")
+
+    private func evaluateUserFunction(_ expression: String, input: Decimal) -> Decimal? {
+        let xLiteral = NSDecimalNumber(decimal: input).stringValue
+
+        let expandedExpression = expression.replacingOccurrences(of: "{x}", with: "(\(xLiteral))")
+        let replaced = substituteStandaloneX(in: expandedExpression, with: "(\(xLiteral))")
+        guard let finalExpression = normalizeUserFunctionNumericLiterals(in: replaced, decimalSeparator: ".") else {
+            return nil
+        }
+        let evaluated = NSExpression(format: finalExpression).expressionValue(with: nil, context: nil)
+
+        if let number = evaluated as? NSNumber {
+            return number.decimalValue
+        }
+        return nil
+    }
+
+    @discardableResult
+    private func commitPowerOperator() -> Bool {
+        guard let value = TapeFormatter.parseLocaleAwareDecimal(draftInput) else {
+            NSSound.beep()
+            return false
+        }
+
+        committedRows.append(
+            TapeRow(
+                special: "",
+                calc: TapeFormatter.formatDecimalForColumn(value),
+                operand: "^",
+                kind: .committed
+            )
+        )
+
+        _ = engine.inputCharacter("^")
+        draftInput = ""
+        draftCursor = 0
+
+        reloadTape(moveToDraft: true)
+        saveCurrentState(isVisible: window?.isVisible ?? false)
+        return true
+    }
+
+    private func applyImmediatePower(exponent: Int) {
+        guard commitPowerOperator() else { return }
+
+        for ch in String(exponent) {
+            handleDigitLike(ch)
+        }
+        handleResult(.equals)
+    }
+
+    private func applyImmediateSquareRoot() {
+        guard let value = TapeFormatter.parseLocaleAwareDecimal(draftInput), value >= 0 else {
+            NSSound.beep()
+            return
+        }
+
+        handleOperator("√")
+        handleResult(.equals)
+    }
+
+    private func integerExponentFromDraft() -> Int? {
+        guard let value = TapeFormatter.parseLocaleAwareDecimal(draftInput) else { return nil }
+        var rounded = Decimal()
+        var mutableValue = value
+        NSDecimalRound(&rounded, &mutableValue, 0, .plain)
+        guard rounded == value else { return nil }
+
+        let roundedNumber = NSDecimalNumber(decimal: rounded)
+        let int64Value = roundedNumber.int64Value
+        let int64AsDecimal = NSDecimalNumber(value: int64Value).decimalValue
+        guard int64AsDecimal == rounded else { return nil }
+        return Int(exactly: int64Value)
     }
 
     private func handleRecallFromFIFO() {
@@ -2541,6 +2927,31 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     private func handleResult(_ key: ResultKey) {
         let preResultSnapshot = engine.snapshot()
+
+        if preResultSnapshot.pendingOperator == .power {
+            guard draftInput.isEmpty || integerExponentFromDraft() != nil else {
+                NSSound.beep()
+                return
+            }
+
+            if let register = preResultSnapshot.register,
+               register == 0,
+               let exponent = integerExponentFromDraft(),
+               exponent < 0
+            {
+                NSSound.beep()
+                return
+            }
+        }
+
+        if preResultSnapshot.pendingOperator == .squareRoot,
+           let register = preResultSnapshot.register,
+           register < 0
+        {
+            NSSound.beep()
+            return
+        }
+
         var pendingCommittedRows: [TapeRow] = []
         if let trace = pendingPercentTrace {
             // For multiplication-percent flow (e.g. 25 * 25 % =), the result row itself
@@ -2649,7 +3060,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         saveCurrentState(isVisible: window?.isVisible ?? false)
     }
 
-    private func handleDelete() {
+    private func handleDelete(forceResetPlacement: Bool = false) {
         pendingPercentTrace = nil
         hasPendingLeadingNegativeSign = false
         let snapshotBeforeDelete = makeFullClearUndoSnapshot()
@@ -2670,7 +3081,10 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             committedRows = [Self.resetBaselineRow]
             draftInput = ""
             draftCursor = 0
-            applyMinimalBottomRightPlacement()
+            let shouldResetPlacement = forceResetPlacement || !activeSettings.floatingWindowEnabled
+            if shouldResetPlacement {
+                applyMinimalBottomRightPlacement()
+            }
         } else {
             draftInput = ""
             draftCursor = 0

@@ -67,6 +67,13 @@ The script:
 - Global toggle hotkey: recordable in Settings (custom key + modifiers, default `F16`) show/hide the interface and return the focus to the calling application (fallback on Finder/Desktop) `Esc` on normal operation do the same, without hiding application.
 - `0-9`, `.`, `,`: numeric input
 - `+`, `-`, `*`, `/`, `x`: operators
+- `P`: open multifunction popover (`x²`, `x³`, `xⁿ`, `√`) when current draft is a valid number
+- `F`: open user-defined functions popover (configured in Settings > Funzioni F) when current draft is a valid number
+- `H`: toggle on/off the quick keyboard help popover on the side of the window
+- `1`, `2`, `3`, `4` while popover is open: select `x²`, `x³`, `xⁿ`, `√`
+- `Up` / `Down` while popover is open: move selection
+- `Enter` while popover is open: confirm selected action
+- `Esc` while popover is open: close without changes
 - `D`: Percentage delta (% change between two values)
 - `%`: percent conversion
 - `Enter` or `=` or `T`: compute result
@@ -75,7 +82,8 @@ The script:
 - `S`: voice-read the numeric value on the selected row
 - `Backspace`: delete one character from current draft input
 - `Delete` (single press): reset current calculation
-- `Delete` (double press within threshold): full clear (including roll)
+- `Delete` (double press within threshold): full clear (including roll); with title bar enabled, keeps current window position
+- `Option` + `Delete` (double press within threshold): full clear (including roll) and reset window position
 - `Cmd`+`Z` full clear undo 
 - `Up` / `Down`: move editable row selection
 - `Home` / `End`: jump to first/last editable row
@@ -84,6 +92,18 @@ The script:
 - `N`: add short note (tag, label or call it whatever) on the selected row.
 - `#`: add text note in the row (marked with `#` on operator column
 - `Esc` while editing: cancel edit
+
+Notes for `P` actions:
+- `x²`, `x³`, `√` are applied immediately to the current draft value.
+- `xⁿ` commits the `^` operator row and waits for exponent input.
+- Exponent for `xⁿ` accepts integer values (positive, zero, negative).
+- `xⁿ` is computed with `Enter`/`=` like other binary operators.
+- Invalid cases trigger a beep and do not alter draft/tape (example: non-integer exponent, `0` raised to a negative exponent, `√` of a negative value).
+
+Notes for `F` actions:
+- User functions are configured in Settings, tab `Funzioni utente`.
+- Each function has: `Nome`, `Simbolo` (max 2 characters, Unicode/emoji allowed), `Calcolo`.
+- `Calcolo` can reference current operand using `x` (or `{x}`), example: `(x*1.22)+5`.
 
 Text rows (`#`) and label (`N`) accepted characters:
 - letters and numbers
@@ -201,14 +221,15 @@ sudo spctl --add /percorso/alla/FastCalc.app
 ## TODO List
 - ~~Add configurable global hotkey~~
 - ~~Add delta % difference calculation~~
-- Add power and square root calculation ?? It's really needed ??
-- Implement macro/functions management (`F` Key ?)
+- ~~Add power and square root calculation~~
+- ~~Implement macro/functions management (`F` Key ?)~~
 - ~~Adjust copy as image for a entire roll~~
 - Adjust code for i18n and prepare for fast and easy l10n
-- Improve status bar behaviour and functionality 
+- Improve status bar behaviour and functionality
 - ~~Remove row numbering on separator — — — —~~
 - Add save/load functionality 
 - ~~Fix the bug when delta % calculation are edited~~
+- Ability to put any number under selected row in the fifo memory
 
 ## License
 

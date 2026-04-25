@@ -29,6 +29,22 @@ public enum WindowStartupMode: String, Sendable {
     case visible
 }
 
+public struct UserDefinedFunction: Equatable, Codable, Sendable {
+    public var id: String
+    public var label: String
+    public var note: String
+    public var expression: String
+    public var resultOnly: Bool
+
+    public init(id: String = UUID().uuidString, label: String, note: String = "", expression: String, resultOnly: Bool = true) {
+        self.id = id
+        self.label = label
+        self.note = String(note.prefix(12))
+        self.expression = expression
+        self.resultOnly = resultOnly
+    }
+}
+
 public struct GlobalHotKey: Equatable, Sendable {
     public var keyCode: UInt32
     public var carbonModifiers: UInt32
@@ -114,7 +130,49 @@ public struct GlobalHotKey: Equatable, Sendable {
         if let key = keyDisplayNames[keyCode] {
             return key
         }
+        if let localizedKeyName = localizedKeyDisplayName(for: keyCode) {
+            return localizedKeyName
+        }
         return "KeyCode \(keyCode)"
+    }
+
+    private static func localizedKeyDisplayName(for keyCode: UInt32) -> String? {
+        guard let inputSource = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue() else {
+            return nil
+        }
+        guard let rawLayoutData = TISGetInputSourceProperty(inputSource, kTISPropertyUnicodeKeyLayoutData) else {
+            return nil
+        }
+
+        let layoutData = unsafeBitCast(rawLayoutData, to: CFData.self)
+        guard let layoutBytes = CFDataGetBytePtr(layoutData) else {
+            return nil
+        }
+
+        let keyboardLayout = UnsafePointer<UCKeyboardLayout>(OpaquePointer(layoutBytes))
+        let keyboardType = UInt32(LMGetKbdType())
+        var deadKeyState: UInt32 = 0
+        var length = 0
+        var characters = [UniChar](repeating: 0, count: 4)
+
+        let status = UCKeyTranslate(
+            keyboardLayout,
+            UInt16(keyCode),
+            UInt16(kUCKeyActionDisplay),
+            0,
+            keyboardType,
+            OptionBits(kUCKeyTranslateNoDeadKeysBit),
+            &deadKeyState,
+            characters.count,
+            &length,
+            &characters
+        )
+
+        guard status == noErr, length > 0 else {
+            return nil
+        }
+
+        return String(utf16CodeUnits: characters, count: length).uppercased()
     }
 }
 
@@ -130,6 +188,7 @@ public struct FastCalcFormatSettings: Equatable, Sendable {
     public var globalHotKey: GlobalHotKey
     public var activeWindowOpacity: Double
     public var inactiveWindowOpacity: Double
+    public var userFunctions: [UserDefinedFunction]
 
     public init(
         decimalMode: DecimalDisplayMode = .floating,
@@ -142,7 +201,8 @@ public struct FastCalcFormatSettings: Equatable, Sendable {
         startupMode: WindowStartupMode = .hidden,
         globalHotKey: GlobalHotKey = .f16,
         activeWindowOpacity: Double = 1.0,
-        inactiveWindowOpacity: Double = 0.5
+        inactiveWindowOpacity: Double = 0.5,
+        userFunctions: [UserDefinedFunction] = []
     ) {
         self.decimalMode = decimalMode
         self.fixedDecimalPlaces = max(0, min(8, fixedDecimalPlaces))
@@ -159,6 +219,7 @@ public struct FastCalcFormatSettings: Equatable, Sendable {
         self.globalHotKey = globalHotKey
         self.activeWindowOpacity = max(0.1, min(1.0, activeWindowOpacity))
         self.inactiveWindowOpacity = max(0.1, min(1.0, inactiveWindowOpacity))
+        self.userFunctions = userFunctions
     }
 }
 
@@ -202,6 +263,14 @@ public final class AppSettingsStore: @unchecked Sendable {
         let hotKeyModifiersRaw = defaults.object(forKey: "\(prefix).globalHotKey.modifiers") as? Int
         let activeWindowOpacity = defaults.object(forKey: "\(prefix).activeWindowOpacity") as? Double ?? defaultsSettings.activeWindowOpacity
         let inactiveWindowOpacity = defaults.object(forKey: "\(prefix).inactiveWindowOpacity") as? Double ?? defaultsSettings.inactiveWindowOpacity
+        let userFunctions: [UserDefinedFunction]
+        if let data = defaults.data(forKey: "\(prefix).userFunctions"),
+           let decoded = try? JSONDecoder().decode([UserDefinedFunction].self, from: data)
+        {
+            userFunctions = decoded
+        } else {
+            userFunctions = defaultsSettings.userFunctions
+        }
         let preferredScreenIndex: Int?
         if let storedIndex = defaults.object(forKey: "\(prefix).preferredScreenIndex") as? Int, storedIndex >= 0 {
             preferredScreenIndex = storedIndex
@@ -241,11 +310,22 @@ public final class AppSettingsStore: @unchecked Sendable {
             startupMode: WindowStartupMode(rawValue: startupModeRaw) ?? .default,
             globalHotKey: loadedHotKey,
             activeWindowOpacity: activeWindowOpacity,
-            inactiveWindowOpacity: inactiveWindowOpacity
+            inactiveWindowOpacity: inactiveWindowOpacity,
+            userFunctions: userFunctions
         )
     }
 
     public func saveFormattingSettings(_ settings: FastCalcFormatSettings) {
+        saveFormattingSettings(settings, postNotification: true)
+    }
+
+    public func saveUserFunctions(_ functions: [UserDefinedFunction]) {
+        if let encodedFunctions = try? JSONEncoder().encode(functions) {
+            defaults.set(encodedFunctions, forKey: "\(prefix).userFunctions")
+        }
+    }
+
+    private func saveFormattingSettings(_ settings: FastCalcFormatSettings, postNotification: Bool) {
         defaults.set(settings.decimalMode.rawValue, forKey: "\(prefix).decimalMode")
         defaults.set(max(0, min(8, settings.fixedDecimalPlaces)), forKey: "\(prefix).fixedPlaces")
         defaults.set(settings.roundingMode.rawValue, forKey: "\(prefix).roundingMode")
@@ -258,12 +338,17 @@ public final class AppSettingsStore: @unchecked Sendable {
         defaults.removeObject(forKey: "\(prefix).globalHotKey")
         defaults.set(max(0.1, min(1.0, settings.activeWindowOpacity)), forKey: "\(prefix).activeWindowOpacity")
         defaults.set(max(0.1, min(1.0, settings.inactiveWindowOpacity)), forKey: "\(prefix).inactiveWindowOpacity")
+        if let encodedFunctions = try? JSONEncoder().encode(settings.userFunctions) {
+            defaults.set(encodedFunctions, forKey: "\(prefix).userFunctions")
+        }
         if let preferredScreenIndex = settings.preferredScreenIndex {
             defaults.set(max(0, preferredScreenIndex), forKey: "\(prefix).preferredScreenIndex")
         } else {
             defaults.removeObject(forKey: "\(prefix).preferredScreenIndex")
         }
-        NotificationCenter.default.post(name: .fastCalcSettingsDidChange, object: nil)
+        if postNotification {
+            NotificationCenter.default.post(name: .fastCalcSettingsDidChange, object: nil)
+        }
     }
 
     public func resetFormattingSettingsToDefaults() {

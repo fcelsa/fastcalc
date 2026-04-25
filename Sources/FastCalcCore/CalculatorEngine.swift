@@ -47,6 +47,12 @@ public final class CalculatorEngine: @unchecked Sendable {
         case "/":
             setOperator(.divide)
             return true
+        case "^":
+            setOperator(.power)
+            return true
+        case "√":
+            setOperator(.squareRoot)
+            return true
         case "d", "D":
             setOperator(.deltaPercent)
             return true
@@ -67,6 +73,10 @@ public final class CalculatorEngine: @unchecked Sendable {
                 case .divide:
                     result = inputValue / 100
                 case .deltaPercent:
+                    result = inputValue / 100
+                case .power:
+                    result = inputValue / 100
+                case .squareRoot:
                     result = inputValue / 100
                 }
             } else {
@@ -199,6 +209,14 @@ public final class CalculatorEngine: @unchecked Sendable {
         deleteTracker.reset()
     }
 
+    public func clearCurrentInput() {
+        currentInput = ""
+        canRecallTotalizer = false
+        lastResultHadOperator = false
+        pendingStandalonePercentResult = false
+        deleteTracker.reset()
+    }
+
     @discardableResult
     public func enqueueTotalizerIfNeeded() -> Decimal? {
         guard totalizer != 0 else { return nil }
@@ -266,6 +284,10 @@ public final class CalculatorEngine: @unchecked Sendable {
         }
 
         if let pending = pendingOperator, let lhs = register {
+            if pending == .squareRoot {
+                return sqrtDecimal(lhs) ?? lhs
+            }
+
             guard let rhs = inputValue else {
                 // Confirm current partial when operator is pending but rhs is missing.
                 return lhs
@@ -341,12 +363,70 @@ public final class CalculatorEngine: @unchecked Sendable {
                 return 0
             }
             return lhs / rhs
+        case .power:
+            guard let exponent = integerExponent(from: rhs) else {
+                return lhs
+            }
+            guard let result = powDecimal(base: lhs, exponent: exponent) else {
+                return lhs
+            }
+            return result
+        case .squareRoot:
+            return sqrtDecimal(lhs) ?? lhs
         case .deltaPercent:
             if lhs == 0 {
                 return 0
             }
             return ((rhs - lhs) / lhs) * 100
         }
+    }
+
+    private func sqrtDecimal(_ value: Decimal) -> Decimal? {
+        guard value >= 0 else { return nil }
+        let asDouble = NSDecimalNumber(decimal: value).doubleValue
+        return Decimal(sqrt(asDouble))
+    }
+
+    private func integerExponent(from value: Decimal) -> Int? {
+        var rounded = Decimal()
+        var mutableValue = value
+        NSDecimalRound(&rounded, &mutableValue, 0, .plain)
+        guard rounded == value else { return nil }
+
+        let roundedNumber = NSDecimalNumber(decimal: rounded)
+        let int64Value = roundedNumber.int64Value
+        let int64AsDecimal = NSDecimalNumber(value: int64Value).decimalValue
+        guard int64AsDecimal == rounded else { return nil }
+        return Int(exactly: int64Value)
+    }
+
+    private func powDecimal(base: Decimal, exponent: Int) -> Decimal? {
+        if exponent == 0 {
+            return 1
+        }
+        if base == 0, exponent < 0 {
+            return nil
+        }
+
+        var absExponent = exponent < 0 ? -exponent : exponent
+        var result: Decimal = 1
+        var factor = base
+
+        while absExponent > 0 {
+            if absExponent % 2 == 1 {
+                result *= factor
+            }
+            absExponent /= 2
+            if absExponent > 0 {
+                factor *= factor
+            }
+        }
+
+        if exponent < 0 {
+            guard result != 0 else { return nil }
+            return 1 / result
+        }
+        return result
     }
 
     private func format(_ value: Decimal) -> String {

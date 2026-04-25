@@ -21,3 +21,4 @@ dist/
 # Other
 *.swp
 .netrc
+planning/
