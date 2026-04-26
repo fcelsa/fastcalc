@@ -78,10 +78,26 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
     @objc
     private func settingsDidChange() {
         applyActivationPolicyFromSettings()
+        let settings = settingsStore.loadFormattingSettings()
+        menuBarController?.updateVisibility(isVisible: settings.menuBarIconEnabled)
         if let hotKeyMonitor {
             _ = registerConfiguredHotKey(using: hotKeyMonitor)
         }
         installMainMenu()
+    }
+
+    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            showMainWindow()
+            return true
+        }
+
+        windowController?.showWindow()
+        return true
+    }
+
+    public func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        menuBarController?.makeMenu()
     }
 
     private func registerConfiguredHotKey(using monitor: HotKeyMonitor) -> Bool {
@@ -101,7 +117,7 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
 
     private func applyActivationPolicyFromSettings() {
         let settings = settingsStore.loadFormattingSettings()
-        let targetPolicy: NSApplication.ActivationPolicy = settings.floatingWindowEnabled ? .regular : .accessory
+        let targetPolicy: NSApplication.ActivationPolicy = settings.dockIconEnabled ? .regular : .accessory
         if NSApp.activationPolicy() != targetPolicy {
             let switched = NSApp.setActivationPolicy(targetPolicy)
             if !switched {
@@ -133,6 +149,11 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
         if wasVisibleAndKey {
             restorePreviousFocusOrFallback(clearTrackedPreviousApp: true)
         }
+    }
+
+    private func showMainWindow() {
+        captureCurrentFrontmostApplication()
+        windowController?.showWindow()
     }
 
     private func returnFocusToPreviousAppWithoutHiding() {

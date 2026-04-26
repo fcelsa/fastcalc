@@ -1235,6 +1235,15 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         }
     }
 
+    public func showWindow() {
+        guard let window else { return }
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        focusDraftRow()
+        saveCurrentState(isVisible: true)
+        updateInputFocusState()
+    }
+
     public func applyMinimalBottomRightPlacement() {
         guard let window else { return }
         guard let screen = Self.resolvePreferredScreen(from: activeSettings) ?? NSScreen.main ?? NSScreen.screens.first else { return }

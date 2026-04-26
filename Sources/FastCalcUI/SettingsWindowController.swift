@@ -70,6 +70,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     private let hotKeyHintLabel = NSTextField(labelWithString: "")
     private let menuBarIconCheckbox = NSButton(checkboxWithTitle: "Icona menu", target: nil, action: nil)
     private let dockIconCheckbox = NSButton(checkboxWithTitle: "Icona nel Dock", target: nil, action: nil)
+    private let iconVisibilityWarningLabel = NSTextField(labelWithString: "")
     private let activeOpacitySlider = NSSlider(value: 90, minValue: 10, maxValue: 100, target: nil, action: nil)
     private let activeOpacityLabel = NSTextField(labelWithString: "")
     private let inactiveOpacitySlider = NSSlider(value: 50, minValue: 10, maxValue: 100, target: nil, action: nil)
@@ -215,6 +216,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         let interactionRows = buildFormRows(rows: [
             (nil, buildOpacityControlsRow()),
             (nil, buildIconVisibilityRow()),
+            (nil, iconVisibilityWarningLabel),
             ("Hotkey globale", buildHotKeyRow())
         ], controlWidth: nil)
 
@@ -394,10 +396,16 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         hotKeyResetButton.action = #selector(resetHotKeyToDefault)
         hotKeyResetButton.bezelStyle = .rounded
 
-        menuBarIconCheckbox.isEnabled = false
-        dockIconCheckbox.isEnabled = false
-        menuBarIconCheckbox.toolTip = "Comportamento non ancora implementato."
-        dockIconCheckbox.toolTip = "Comportamento non ancora implementato."
+        menuBarIconCheckbox.target = self
+        menuBarIconCheckbox.action = #selector(windowBehaviorChanged)
+
+        dockIconCheckbox.target = self
+        dockIconCheckbox.action = #selector(windowBehaviorChanged)
+
+        iconVisibilityWarningLabel.font = .systemFont(ofSize: 11)
+        iconVisibilityWarningLabel.textColor = .systemOrange
+        iconVisibilityWarningLabel.lineBreakMode = .byWordWrapping
+        iconVisibilityWarningLabel.maximumNumberOfLines = 2
 
         hotKeyHintLabel.font = .systemFont(ofSize: 11)
         hotKeyHintLabel.textColor = .secondaryLabelColor
@@ -644,6 +652,8 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         allSpacesCheckbox.state = draftSettings.showOnAllSpaces ? .on : .off
         floatingWindowCheckbox.state = draftSettings.floatingWindowEnabled ? .on : .off
         alwaysOnTopCheckbox.state = draftSettings.alwaysOnTop ? .on : .off
+        menuBarIconCheckbox.state = draftSettings.menuBarIconEnabled ? .on : .off
+        dockIconCheckbox.state = draftSettings.dockIconEnabled ? .on : .off
 
         switch draftSettings.startupMode {
         case .default:
@@ -663,6 +673,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         activeOpacitySlider.doubleValue = draftSettings.activeWindowOpacity * 100
         inactiveOpacitySlider.doubleValue = draftSettings.inactiveWindowOpacity * 100
         updateOpacityLabels()
+        updateIconVisibilityWarning()
         reloadScreenChoices()
         reloadFunctionsUI()
     }
@@ -689,6 +700,8 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         draftSettings.showOnAllSpaces = allSpacesCheckbox.state == .on
         draftSettings.floatingWindowEnabled = floatingWindowCheckbox.state == .on
         draftSettings.alwaysOnTop = alwaysOnTopCheckbox.state == .on
+        draftSettings.menuBarIconEnabled = menuBarIconCheckbox.state == .on
+        draftSettings.dockIconEnabled = dockIconCheckbox.state == .on
 
         switch startupModePopup.indexOfSelectedItem {
         case 1:
@@ -784,6 +797,16 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         inactiveOpacityLabel.stringValue = "\(Int(inactiveOpacitySlider.doubleValue.rounded()))%"
     }
 
+    private func updateIconVisibilityWarning() {
+        let menuBarEnabled = menuBarIconCheckbox.state == .on
+        let dockEnabled = dockIconCheckbox.state == .on
+        if !menuBarEnabled && !dockEnabled {
+            iconVisibilityWarningLabel.stringValue = "Disabilitando entrambe le icone, l'unico modo per riportare in primo piano l'app sarà la hotkey globale."
+        } else {
+            iconVisibilityWarningLabel.stringValue = ""
+        }
+    }
+
     private func persistUserFunctions() {
         draftSettings.userFunctions = draftFunctions
         settingsStore.saveUserFunctions(draftFunctions)
@@ -811,6 +834,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     @objc
     private func windowBehaviorChanged() {
         updateDraftFromUI()
+        updateIconVisibilityWarning()
     }
 
     @objc

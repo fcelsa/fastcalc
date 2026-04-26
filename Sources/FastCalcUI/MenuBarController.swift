@@ -37,15 +37,43 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
     }
 
     public func install() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.title = "fc"
+        updateVisibility(isVisible: settingsStore.loadFormattingSettings().menuBarIconEnabled)
+    }
 
+    public func makeMenu() -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
         rebuildMenu(menu)
-        item.menu = menu
+        return menu
+    }
+
+    public func updateVisibility(isVisible: Bool) {
+        if isVisible {
+            installStatusItemIfNeeded()
+        } else {
+            removeStatusItem()
+        }
+    }
+
+    private func installStatusItemIfNeeded() {
+        guard statusItem == nil else {
+            if let menu = statusItem?.menu {
+                rebuildMenu(menu)
+            }
+            return
+        }
+
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        item.button?.title = "fc"
+        item.menu = makeMenu()
 
         statusItem = item
+    }
+
+    private func removeStatusItem() {
+        guard let statusItem else { return }
+        NSStatusBar.system.removeStatusItem(statusItem)
+        self.statusItem = nil
     }
 
     public func menuWillOpen(_ menu: NSMenu) {
@@ -57,48 +85,48 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
 
         let hotKeyName = settingsStore.loadFormattingSettings().globalHotKey.displayName
 
-        let toggleItem = NSMenuItem(title: "Visualizza/Nascondi (\(hotKeyName))", action: #selector(toggle), keyEquivalent: "")
+        let toggleItem = NSMenuItem(title: localized("menu.toggle", fallback: "Visualizza/Nascondi") + " (\(hotKeyName))", action: #selector(toggle), keyEquivalent: "")
         toggleItem.target = self
         menu.addItem(toggleItem)
 
-        let aboutItem = NSMenuItem(title: "Informazioni su FastCalc...", action: #selector(openAbout), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: localized("menu.about", fallback: "Informazioni su FastCalc..."), action: #selector(openAbout), keyEquivalent: "")
         aboutItem.target = self
         menu.addItem(aboutItem)
 
         menu.addItem(.separator())
 
-        let copyItem = NSMenuItem(title: "Copia come testo", action: #selector(copyTapeText), keyEquivalent: "")
+        let copyItem = NSMenuItem(title: localized("menu.copyText", fallback: "Copia come testo"), action: #selector(copyTapeText), keyEquivalent: "")
         copyItem.target = self
         menu.addItem(copyItem)
 
-        let copyPNGItem = NSMenuItem(title: "Copia come immagine", action: #selector(copyVisiblePNG), keyEquivalent: "")
+        let copyPNGItem = NSMenuItem(title: localized("menu.copyImage", fallback: "Copia come immagine"), action: #selector(copyVisiblePNG), keyEquivalent: "")
         copyPNGItem.target = self
         menu.addItem(copyPNGItem)
 
-        let printItem = NSMenuItem(title: "Stampa...", action: #selector(printTape), keyEquivalent: "p")
+        let printItem = NSMenuItem(title: localized("menu.print", fallback: "Stampa..."), action: #selector(printTape), keyEquivalent: "p")
         printItem.keyEquivalentModifierMask = [.command]
         printItem.target = self
         menu.addItem(printItem)
 
-        let exportItem = NSMenuItem(title: "Esporta PDF...", action: #selector(exportPDF), keyEquivalent: "")
+        let exportItem = NSMenuItem(title: localized("menu.exportPDF", fallback: "Esporta PDF..."), action: #selector(exportPDF), keyEquivalent: "")
         exportItem.target = self
         menu.addItem(exportItem)
 
         menu.addItem(.separator())
 
-        let settingsItem = NSMenuItem(title: "Impostazioni...", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: localized("menu.settings", fallback: "Impostazioni..."), action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.keyEquivalentModifierMask = [.command]
         settingsItem.target = self
         menu.addItem(settingsItem)
 
         let screens = NSScreen.screens
         if screens.count > 1 {
-            let moveRoot = NSMenuItem(title: "Sposta su schermo", action: nil, keyEquivalent: "")
+            let moveRoot = NSMenuItem(title: localized("menu.moveToScreen", fallback: "Sposta su schermo"), action: nil, keyEquivalent: "")
             let moveMenu = NSMenu()
             let selectedIndex = settingsStore.loadFormattingSettings().preferredScreenIndex
 
             for index in screens.indices {
-                let item = NSMenuItem(title: "Schermo \(index + 1)", action: #selector(moveToScreen(_:)), keyEquivalent: "")
+                let item = NSMenuItem(title: localized("menu.screen", fallback: "Schermo") + " \(index + 1)", action: #selector(moveToScreen(_:)), keyEquivalent: "")
                 item.tag = index
                 item.state = selectedIndex == index ? .on : .off
                 item.target = self
@@ -110,10 +138,14 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
-        let quitItem = NSMenuItem(title: "Esci", action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: localized("menu.quit", fallback: "Esci"), action: #selector(quit), keyEquivalent: "q")
         quitItem.keyEquivalentModifierMask = [.command]
         quitItem.target = self
         menu.addItem(quitItem)
+    }
+
+    private func localized(_ key: String, fallback: String) -> String {
+        NSLocalizedString(key, tableName: nil, bundle: .main, value: fallback, comment: "Shared status item and dock menu label")
     }
 
     @objc

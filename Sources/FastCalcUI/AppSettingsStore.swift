@@ -186,6 +186,8 @@ public struct FastCalcFormatSettings: Equatable, Sendable {
     public var alwaysOnTop: Bool
     public var startupMode: WindowStartupMode
     public var globalHotKey: GlobalHotKey
+    public var menuBarIconEnabled: Bool
+    public var dockIconEnabled: Bool
     public var activeWindowOpacity: Double
     public var inactiveWindowOpacity: Double
     public var userFunctions: [UserDefinedFunction]
@@ -200,6 +202,8 @@ public struct FastCalcFormatSettings: Equatable, Sendable {
         alwaysOnTop: Bool = true,
         startupMode: WindowStartupMode = .hidden,
         globalHotKey: GlobalHotKey = .f16,
+        menuBarIconEnabled: Bool = true,
+        dockIconEnabled: Bool = false,
         activeWindowOpacity: Double = 1.0,
         inactiveWindowOpacity: Double = 0.5,
         userFunctions: [UserDefinedFunction] = []
@@ -217,6 +221,8 @@ public struct FastCalcFormatSettings: Equatable, Sendable {
         self.alwaysOnTop = alwaysOnTop
         self.startupMode = startupMode
         self.globalHotKey = globalHotKey
+        self.menuBarIconEnabled = menuBarIconEnabled
+        self.dockIconEnabled = dockIconEnabled
         self.activeWindowOpacity = max(0.1, min(1.0, activeWindowOpacity))
         self.inactiveWindowOpacity = max(0.1, min(1.0, inactiveWindowOpacity))
         self.userFunctions = userFunctions
@@ -239,6 +245,8 @@ public final class AppSettingsStore: @unchecked Sendable {
         alwaysOnTop: true,
         startupMode: .hidden,
         globalHotKey: .f16,
+        menuBarIconEnabled: true,
+        dockIconEnabled: false,
         activeWindowOpacity: 1.0,
         inactiveWindowOpacity: 0.5
     )
@@ -261,6 +269,8 @@ public final class AppSettingsStore: @unchecked Sendable {
         let startupModeRaw = defaults.string(forKey: "\(prefix).startupMode") ?? defaultsSettings.startupMode.rawValue
         let hotKeyCodeRaw = defaults.object(forKey: "\(prefix).globalHotKey.keyCode") as? Int
         let hotKeyModifiersRaw = defaults.object(forKey: "\(prefix).globalHotKey.modifiers") as? Int
+        let menuBarIconEnabled = defaults.object(forKey: "\(prefix).menuBarIconEnabled") as? Bool ?? defaultsSettings.menuBarIconEnabled
+        let dockIconEnabled = defaults.object(forKey: "\(prefix).dockIconEnabled") as? Bool ?? defaultsSettings.dockIconEnabled
         let activeWindowOpacity = defaults.object(forKey: "\(prefix).activeWindowOpacity") as? Double ?? defaultsSettings.activeWindowOpacity
         let inactiveWindowOpacity = defaults.object(forKey: "\(prefix).inactiveWindowOpacity") as? Double ?? defaultsSettings.inactiveWindowOpacity
         let userFunctions: [UserDefinedFunction]
@@ -309,6 +319,8 @@ public final class AppSettingsStore: @unchecked Sendable {
             alwaysOnTop: alwaysOnTop,
             startupMode: WindowStartupMode(rawValue: startupModeRaw) ?? .default,
             globalHotKey: loadedHotKey,
+            menuBarIconEnabled: menuBarIconEnabled,
+            dockIconEnabled: dockIconEnabled,
             activeWindowOpacity: activeWindowOpacity,
             inactiveWindowOpacity: inactiveWindowOpacity,
             userFunctions: userFunctions
@@ -336,6 +348,8 @@ public final class AppSettingsStore: @unchecked Sendable {
         defaults.set(Int(settings.globalHotKey.keyCode), forKey: "\(prefix).globalHotKey.keyCode")
         defaults.set(Int(settings.globalHotKey.carbonModifiers), forKey: "\(prefix).globalHotKey.modifiers")
         defaults.removeObject(forKey: "\(prefix).globalHotKey")
+        defaults.set(settings.menuBarIconEnabled, forKey: "\(prefix).menuBarIconEnabled")
+        defaults.set(settings.dockIconEnabled, forKey: "\(prefix).dockIconEnabled")
         defaults.set(max(0.1, min(1.0, settings.activeWindowOpacity)), forKey: "\(prefix).activeWindowOpacity")
         defaults.set(max(0.1, min(1.0, settings.inactiveWindowOpacity)), forKey: "\(prefix).inactiveWindowOpacity")
         if let encodedFunctions = try? JSONEncoder().encode(settings.userFunctions) {
