@@ -1,3 +1,17 @@
+/* App help title */
+"help.title" = "Quick help";
+
+/* Help sections */
+"help.section.input" = "INPUT";
+"help.section.multifunction" = "MULTIFUNCTION";
+"help.section.calc" = "CALCULATION & MEMORY";
+"help.section.edit" = "EDIT";
+
+/* Example of a stringsdict-backed plural key */
+"files.count" = "%#@files@";
+
+/* Example with placeholder (positional) */
+"welcome.user" = "Welcome, %1$@!";
 "help.title" = "Quick help";
 
 "help.section.input" = "INPUT";
