@@ -1,34 +1,122 @@
-/* App help title */
-"help.title" = "Quick help";
+"app.displayName" = "FastCalc";
 
-/* Help sections */
-"help.section.input" = "INPUT";
-"help.section.multifunction" = "MULTIFUNCTION";
-"help.section.calc" = "CALCULATION & MEMORY";
-"help.section.edit" = "EDIT";
+"errors.hotKey.blocked" = "Reserved or too invasive combination: choose another hotkey.";
+"errors.hotKey.likelyReserved" = "Combination likely reserved by the system: verify it works on your Mac.";
+"errors.hotKey.modifierOnly" = "Modifier-only keys are not allowed.";
+"errors.hotKey.modifierRequired" = "For non-function keys, use at least one modifier (Cmd/Opt/Ctrl/Shift).";
+"errors.pdfExport.body" = "An error occurred while exporting the tape.";
+"errors.pdfExport.title" = "Unable to export PDF";
 
-/* Example of a stringsdict-backed plural key */
-"files.count" = "%#@files@";
-
-/* Example with placeholder (positional) */
-"welcome.user" = "Welcome, %1$@!";
-"help.title" = "Quick help";
-
-"help.section.input" = "INPUT";
-"help.section.multifunction" = "MULTI-FUNCTION";
-"help.section.calc" = "CALCULATION & MEMORY";
-"help.section.edit" = "EDIT";
-
-"help.line.numeric" = "- 0-9 , . : numeric input";
-"help.line.operators" = "- + - * / D %% : operators and percentages";
-"help.line.p" = "- P : powers and square root popover";
-"help.line.f" = "- F : user functions popover";
-"help.line.h" = "- H : show/hide this help";
-"help.line.popover.select" = "- 1..9 / arrows / Enter / Esc : popover selection";
-"help.line.result" = "- Enter or = or T : result";
-"help.line.fifo" = "- M / R : FIFO totalizer";
+"help.empty" = "No commands available.";
 "help.line.backspace" = "- Backspace : delete one character";
 "help.line.delete" = "- Delete x2 : full reset";
+"help.line.f" = "- F : user functions popover";
+"help.line.fifo" = "- M / R : FIFO totalizer";
+"help.line.h" = "- H : show/hide this help";
+"help.line.numeric" = "- 0-9 , . : numeric input";
+"help.line.operators" = "- + - * / D % : operators and percentages";
 "help.line.optionDelete" = "- Option + Delete x2 : reset + position";
+"help.line.p" = "- P : powers and square root popover";
+"help.line.popover.select" = "- 1..9 / arrows / Enter / Esc : popover selection";
+"help.line.result" = "- Enter or = or T : result";
 "help.line.undo" = "- Cmd+Z : undo full clear";
-"help.empty" = "No commands available.";
+"help.section.calc" = "CALCULATION & MEMORY";
+"help.section.edit" = "EDIT";
+"help.section.input" = "INPUT";
+"help.section.multifunction" = "MULTI-FUNCTION";
+"help.title" = "Quick help";
+
+"menu.app.about" = "About FastCalc...";
+"menu.app.quitWithAppName" = "Quit %1$@";
+"menu.app.settings" = "Settings...";
+"menu.item.copy" = "Copy";
+"menu.item.copyImage" = "Copy as image";
+"menu.item.copyText" = "Copy as text";
+"menu.item.cut" = "Cut";
+"menu.item.exportPdf" = "Export PDF...";
+"menu.item.moveToScreen" = "Move to screen";
+"menu.item.paste" = "Paste";
+"menu.item.print" = "Print...";
+"menu.item.quit" = "Quit";
+"menu.item.redo" = "Redo";
+"menu.item.screen" = "Screen %1$d";
+"menu.item.toggleWithHotKey" = "Show/Hide (%1$@)";
+"menu.item.undo" = "Undo";
+"menu.section.edit" = "Edit";
+"menu.section.file" = "File";
+"menu.section.view" = "View";
+"menu.status.iconTitle" = "fc";
+
+"multifunction.f.title" = "User functions";
+"multifunction.p.cube.detail" = "Power of 3";
+"multifunction.p.cube.title" = "x³";
+"multifunction.p.powerN.detail" = "^n integers only";
+"multifunction.p.powerN.title" = "xⁿ";
+"multifunction.p.square.detail" = "Power of 2";
+"multifunction.p.square.title" = "x²";
+"multifunction.p.squareRoot.detail" = "Square root";
+"multifunction.p.squareRoot.title" = "√";
+"multifunction.p.title" = "Powers and root";
+
+"roll.exportPdf.defaultFileName" = "%1$@ FastCalc.pdf";
+"roll.exportPdf.panelTitle" = "Export PDF";
+"roll.print.footer.pageOf" = "Page %1$d of %2$d";
+"roll.print.header.version" = "FastCalc ver. %1$@";
+"roll.status.grandTotal" = "GT: %1$@";
+"roll.status.queuedGrandTotal" = "%1$d GT: %2$@";
+
+"settings.a11y.add" = "Add";
+"settings.a11y.remove" = "Remove";
+"settings.button.cancel" = "Cancel";
+"settings.button.default" = "Default";
+"settings.button.ok" = "OK";
+"settings.button.register" = "Record";
+"settings.checkbox.allSpaces" = "Visible on all Spaces";
+"settings.checkbox.alwaysOnTop" = "Always on top";
+"settings.checkbox.dockIcon" = "Dock icon";
+"settings.checkbox.menuBarIcon" = "Menu bar icon";
+"settings.checkbox.resultOnly" = "Result only";
+"settings.checkbox.showTitlebar" = "Show title bar";
+"settings.function.defaultExpression" = "x";
+"settings.function.defaultName" = "New function";
+"settings.hint.function" = "Use x (or {x}) as current operand. Disable Result only to replay only keyboard-typeable expressions into the roll.";
+"settings.hint.hotKeyAvoidReserved" = "Avoid combinations already used by the system (for example Cmd+Space, Cmd+Tab).";
+"settings.hint.hotKeyPressNew" = "Press the new combination. Esc to cancel.";
+"settings.hint.hotKeyRegistrationCancelled" = "Registration cancelled.";
+"settings.hint.hotKeyRestoredDefault" = "Hotkey restored to F16.";
+"settings.hint.hotKeyUpdated" = "Hotkey updated: %1$@.";
+"settings.hint.screenMultiple" = "Used for opening and window repositioning.";
+"settings.hint.screenSingle" = "Option enabled only when multiple screens are connected.";
+"settings.label.activeOpacity" = "Active opacity";
+"settings.label.decimals" = "Decimals";
+"settings.label.defaultScreen" = "Default screen";
+"settings.label.example" = "Example";
+"settings.label.functionExpression" = "Expression";
+"settings.label.functionName" = "Name";
+"settings.label.functionNote" = "Note";
+"settings.label.hotKey" = "Global hotkey";
+"settings.label.inactiveOpacity" = "Inactive opacity";
+"settings.label.rounding" = "Rounding";
+"settings.label.startupMode" = "Startup mode";
+"settings.label.view" = "View";
+"settings.placeholder.functionExpression" = "Expression with x, e.g. (x*1.22)+5";
+"settings.placeholder.functionName" = "Function name";
+"settings.placeholder.functionNote" = "Short note (max 12)";
+"settings.popup.decimals.floating" = "FL";
+"settings.popup.rounding.down" = "Down";
+"settings.popup.rounding.nearest" = "Nearest";
+"settings.popup.rounding.up" = "Up";
+"settings.popup.startup.default" = "Default";
+"settings.popup.startup.hidden" = "Hidden";
+"settings.popup.startup.visible" = "Visible";
+"settings.screen.item" = "Screen %1$d";
+"settings.tab.functions" = "User functions";
+"settings.tab.general" = "General";
+"settings.warning.iconVisibility" = "If both icons are disabled, the only way to show the app again is the global hotkey.";
+"settings.window.title" = "Settings";
+
+"about.window.title" = "About";
+"about.label.description" = "Fast calculator with paper tape";
+"about.version.line" = "Ver. %1$@ (build %2$@)";
+"about.version.debugShort" = "Debug session";
+"about.version.debugBuild" = "swift run";

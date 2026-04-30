@@ -229,7 +229,7 @@ private final class TapePrintPageView: NSView {
             }
         }
 
-        let footerText = "Pag. \(pageNumber) di \(totalPages)"
+        let footerText = L10n.Roll.printFooterPage(pageNumber, totalPages)
         let footerRect = NSRect(x: marginLeft, y: max(contentBottom, pageOriginY + pageSize.height - marginBottom), width: printableWidth, height: 12)
         footerText.draw(in: footerRect, withAttributes: footerAttributes)
     }
@@ -394,7 +394,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             backing: .buffered,
             defer: false
         )
-        window.title = activeSettings.floatingWindowEnabled ? "FastCalc" : ""
+        window.title = activeSettings.floatingWindowEnabled ? L10n.App.displayName : ""
         window.titleVisibility = activeSettings.floatingWindowEnabled ? .visible : .hidden
         window.titlebarAppearsTransparent = !activeSettings.floatingWindowEnabled
         window.isReleasedWhenClosed = false
@@ -465,7 +465,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         guard let window else { return }
 
         window.styleMask = activeSettings.floatingWindowEnabled ? [.titled] : [.borderless]
-        window.title = activeSettings.floatingWindowEnabled ? "FastCalc" : ""
+        window.title = activeSettings.floatingWindowEnabled ? L10n.App.displayName : ""
         window.titleVisibility = activeSettings.floatingWindowEnabled ? .visible : .hidden
         window.titlebarAppearsTransparent = !activeSettings.floatingWindowEnabled
         window.level = activeSettings.alwaysOnTop ? .floating : .normal
@@ -689,8 +689,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
     public func exportTapePDF() {
         let panel = NSSavePanel()
-        panel.title = "Esporta PDF"
-        panel.nameFieldStringValue = "\(exportDateFormatter.string(from: Date())) FastCalc.pdf"
+        panel.title = L10n.Roll.exportPdfPanelTitle
+        panel.nameFieldStringValue = L10n.Roll.exportPdfDefaultFileName(exportDateFormatter.string(from: Date()))
         panel.allowedContentTypes = [.pdf]
         panel.canCreateDirectories = true
 
@@ -709,8 +709,8 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
 
         if !operation.run() {
             let alert = NSAlert()
-            alert.messageText = "Impossibile esportare il PDF"
-            alert.informativeText = "Si e verificato un errore durante l'esportazione del tape."
+            alert.messageText = L10n.Errors.pdfExportTitle
+            alert.informativeText = L10n.Errors.pdfExportBody
             alert.alertStyle = .warning
             alert.runModal()
         }
@@ -764,7 +764,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private func makePrintablePageView(printInfo: NSPrintInfo) -> TapePrintPageView {
         let printableRows = makePrintableRows(includeSeparatorLineNumbers: false)
         let lines = makePrintableLines(from: printableRows)
-        let versionHeader = "FastCalc ver. \(appVersionString())"
+        let versionHeader = L10n.Roll.printHeaderVersion(appVersionString())
         let timestamp = dateTimeFormatter.string(from: Date())
         return TapePrintPageView(
             lines: lines,
@@ -1629,9 +1629,9 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
         if fifoCount == 0, snapshot.totalizer == 0 {
             statusLabel.stringValue = ""
         } else if fifoCount > 0 {
-            statusLabel.stringValue = "\(fifoCount) GT: \(gtText)"
+            statusLabel.stringValue = L10n.Roll.statusQueuedGrandTotal(fifoCount, gtText)
         } else {
-            statusLabel.stringValue = "GT: \(gtText)"
+            statusLabel.stringValue = L10n.Roll.statusGrandTotal(gtText)
         }
         window?.alphaValue = hasInputFocus ? activeAlpha : inactiveAlpha
     }

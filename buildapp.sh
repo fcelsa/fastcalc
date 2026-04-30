@@ -17,6 +17,52 @@ PLIST_PATH="${APP_DIR}/Contents/Info.plist"
 ZIP_PATH="${DIST_DIR}/${ZIP_NAME}"
 ICON_SOURCE_PATH="${ROOT_DIR}/resources/${ICON_FILE_NAME}"
 ICON_BUNDLE_PATH="${APP_DIR}/Contents/Resources/${ICON_FILE_NAME}"
+RESOURCE_BUNDLE_SOURCE=""
+RESOURCE_BUNDLE_NAME=""
+RESOURCE_BUNDLE_DESTINATION=""
+
+# Finds the SwiftPM-generated resource bundle that contains localizations.
+# We use .lproj presence as a strong signal and keep this independent from hardcoded bundle names.
+find_localization_bundle() {
+  local build_release_dir="$1"
+  local candidate=""
+
+  for candidate in "${build_release_dir}"/*.bundle; do
+    if [[ ! -d "${candidate}" ]]; then
+      continue
+    fi
+
+    if [[ -f "${candidate}/en.lproj/Localizable.strings" ]] || [[ -f "${candidate}/it.lproj/Localizable.strings" ]]; then
+      printf "%s\n" "${candidate}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+# Mirrors language folders into the app main bundle Resources.
+# This keeps the packaged .app aligned with standard macOS layout (Resources/*.lproj).
+copy_localizations_to_main_resources() {
+  local source_bundle="$1"
+  local destination_resources="$2"
+  local localization_dir=""
+  local copied_any=0
+
+  for localization_dir in "${source_bundle}"/*.lproj; do
+    if [[ ! -d "${localization_dir}" ]]; then
+      continue
+    fi
+
+    cp -R "${localization_dir}" "${destination_resources}/"
+    copied_any=1
+  done
+
+  if [[ "${copied_any}" -eq 0 ]]; then
+    printf "Errore: nessuna directory .lproj trovata in %s\n" "${source_bundle}" >&2
+    return 1
+  fi
+}
 
 printf "\n==> Pulizia output precedenti\n"
 rm -rf "${DIST_DIR}" "${BUILD_ARM_DIR}" "${BUILD_X86_DIR}"
@@ -27,6 +73,19 @@ swift build -c release --arch arm64 --scratch-path "${BUILD_ARM_DIR}"
 
 printf "\n==> Build release x86_64\n"
 swift build -c release --arch x86_64 --scratch-path "${BUILD_X86_DIR}"
+
+printf "\n==> Risoluzione bundle risorse SwiftPM\n"
+if RESOURCE_BUNDLE_SOURCE="$(find_localization_bundle "${BUILD_ARM_DIR}/release")"; then
+  :
+elif RESOURCE_BUNDLE_SOURCE="$(find_localization_bundle "${BUILD_X86_DIR}/release")"; then
+  :
+else
+  printf "Errore: nessun bundle risorse localizzazione trovato nelle build SwiftPM.\n" >&2
+  exit 1
+fi
+
+RESOURCE_BUNDLE_NAME="$(basename "${RESOURCE_BUNDLE_SOURCE}")"
+RESOURCE_BUNDLE_DESTINATION="${APP_DIR}/Contents/Resources/${RESOURCE_BUNDLE_NAME}"
 
 printf "\n==> Creazione binario universal\n"
 lipo -create \
@@ -64,6 +123,7 @@ cat > "${PLIST_PATH}" <<EOF
 <dict>
   <key>CFBundleName</key><string>${APP_NAME}</string>
   <key>CFBundleDisplayName</key><string>${APP_NAME}</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>CFBundleIdentifier</key><string>com.fastcalc.app</string>
   <key>CFBundleIconFile</key><string>${ICON_FILE_NAME}</string>
   <key>CFBundleExecutable</key><string>${EXECUTABLE_NAME}</string>
@@ -81,6 +141,27 @@ if [[ ! -f "${ICON_SOURCE_PATH}" ]]; then
   exit 1
 fi
 cp "${ICON_SOURCE_PATH}" "${ICON_BUNDLE_PATH}"
+
+printf "\n==> Copia risorse localizzazione SwiftPM\n"
+if [[ ! -d "${RESOURCE_BUNDLE_SOURCE}" ]]; then
+  printf "Errore: bundle risorse non trovato (%s)\n" "${RESOURCE_BUNDLE_SOURCE}" >&2
+  exit 1
+fi
+
+cp -R "${RESOURCE_BUNDLE_SOURCE}" "${RESOURCE_BUNDLE_DESTINATION}"
+
+printf "\n==> Copia localizzazioni nel main bundle (.lproj)\n"
+copy_localizations_to_main_resources "${RESOURCE_BUNDLE_DESTINATION}" "${APP_DIR}/Contents/Resources"
+
+if [[ ! -f "${RESOURCE_BUNDLE_DESTINATION}/en.lproj/Localizable.strings" ]] && [[ ! -f "${RESOURCE_BUNDLE_DESTINATION}/it.lproj/Localizable.strings" ]]; then
+  printf "Errore: bundle risorse copiato ma privo di Localizable.strings localizzate.\n" >&2
+  exit 1
+fi
+
+if [[ ! -f "${APP_DIR}/Contents/Resources/en.lproj/Localizable.strings" ]] && [[ ! -f "${APP_DIR}/Contents/Resources/it.lproj/Localizable.strings" ]]; then
+  printf "Errore: localizzazioni non presenti in Contents/Resources del main bundle.\n" >&2
+  exit 1
+fi
 
 printf "\n==> Firma ad-hoc bundle\n"
 codesign --force --deep --sign - "${APP_DIR}"

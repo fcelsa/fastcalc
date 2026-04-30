@@ -58,7 +58,7 @@ final class HelpPopoverController: NSObject, NSPopoverDelegate {
 }
 
 private final class HelpPopoverContentController: NSViewController {
-    private let titleLabel = NSTextField(labelWithString: "Guida rapida")
+    private let titleLabel = NSTextField(labelWithString: L10n.Help.title)
     private let textView = NSTextView(frame: .zero)
 
     override func loadView() {
@@ -115,15 +115,7 @@ private final class HelpPopoverContentController: NSViewController {
         titleLabel.stringValue = title
         let visibleLines: [String]
         if lines.isEmpty {
-            visibleLines = [
-                NSLocalizedString(
-                    "help.empty",
-                    tableName: nil,
-                    bundle: .main,
-                    value: "No commands available.",
-                    comment: "Shown when help content is empty"
-                )
-            ]
+            visibleLines = [L10n.Help.empty]
         } else {
             visibleLines = lines
         }

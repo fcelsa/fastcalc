@@ -240,95 +240,95 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
         let appMenu = NSMenu()
         appMenuItem.submenu = appMenu
 
-        let aboutItem = NSMenuItem(title: "Informazioni su FastCalc...", action: #selector(openAboutFromMenu(_:)), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: L10n.Menu.about, action: #selector(openAboutFromMenu(_:)), keyEquivalent: "")
         aboutItem.target = self
         appMenu.addItem(aboutItem)
 
         appMenu.addItem(.separator())
 
-        let settingsItem = NSMenuItem(title: "Impostazioni...", action: #selector(openSettingsFromMenu(_:)), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: L10n.Menu.settings, action: #selector(openSettingsFromMenu(_:)), keyEquivalent: ",")
         settingsItem.keyEquivalentModifierMask = [.command]
         settingsItem.target = self
         appMenu.addItem(settingsItem)
         appMenu.addItem(.separator())
 
         let appName = ProcessInfo.processInfo.processName
-        let quitItem = NSMenuItem(title: "Esci \(appName)", action: #selector(quitFromMenu(_:)), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: L10n.Menu.quitWithAppName(appName), action: #selector(quitFromMenu(_:)), keyEquivalent: "q")
         quitItem.keyEquivalentModifierMask = [.command]
         quitItem.target = self
         appMenu.addItem(quitItem)
 
-        let fileMenuItem = NSMenuItem(title: "File", action: nil, keyEquivalent: "")
+        let fileMenuItem = NSMenuItem(title: L10n.Menu.fileSection, action: nil, keyEquivalent: "")
         mainMenu.addItem(fileMenuItem)
-        let fileMenu = NSMenu(title: "File")
+        let fileMenu = NSMenu(title: L10n.Menu.fileSection)
         fileMenuItem.submenu = fileMenu
 
-        let printItem = NSMenuItem(title: "Stampa...", action: #selector(printFromMenu(_:)), keyEquivalent: "p")
+        let printItem = NSMenuItem(title: L10n.Menu.print, action: #selector(printFromMenu(_:)), keyEquivalent: "p")
         printItem.keyEquivalentModifierMask = [.command]
         printItem.target = self
         fileMenu.addItem(printItem)
 
-        let exportPDFItem = NSMenuItem(title: "Esporta PDF...", action: #selector(exportPDFFromMenu(_:)), keyEquivalent: "")
+        let exportPDFItem = NSMenuItem(title: L10n.Menu.exportPdf, action: #selector(exportPDFFromMenu(_:)), keyEquivalent: "")
         exportPDFItem.target = self
         fileMenu.addItem(exportPDFItem)
 
-        let editMenuItem = NSMenuItem(title: "Modifica", action: nil, keyEquivalent: "")
+        let editMenuItem = NSMenuItem(title: L10n.Menu.editSection, action: nil, keyEquivalent: "")
         mainMenu.addItem(editMenuItem)
-        let editMenu = NSMenu(title: "Modifica")
+        let editMenu = NSMenu(title: L10n.Menu.editSection)
         editMenuItem.submenu = editMenu
 
-        let undoItem = NSMenuItem(title: "Annulla", action: Selector(("undo:")), keyEquivalent: "z")
+        let undoItem = NSMenuItem(title: L10n.Menu.undo, action: Selector(("undo:")), keyEquivalent: "z")
         undoItem.keyEquivalentModifierMask = [.command]
         editMenu.addItem(undoItem)
 
-        let redoItem = NSMenuItem(title: "Ripristina", action: Selector(("redo:")), keyEquivalent: "Z")
+        let redoItem = NSMenuItem(title: L10n.Menu.redo, action: Selector(("redo:")), keyEquivalent: "Z")
         redoItem.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(redoItem)
 
         editMenu.addItem(.separator())
 
-        let cutItem = NSMenuItem(title: "Taglia", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        let cutItem = NSMenuItem(title: L10n.Menu.cut, action: #selector(NSText.cut(_:)), keyEquivalent: "x")
         cutItem.keyEquivalentModifierMask = [.command]
         editMenu.addItem(cutItem)
 
-        let copyItem = NSMenuItem(title: "Copia", action: #selector(copyPreferredNumericFromMenu(_:)), keyEquivalent: "c")
+        let copyItem = NSMenuItem(title: L10n.Menu.copy, action: #selector(copyPreferredNumericFromMenu(_:)), keyEquivalent: "c")
         copyItem.keyEquivalentModifierMask = [.command]
         copyItem.target = self
         editMenu.addItem(copyItem)
 
-        let pasteItem = NSMenuItem(title: "Incolla", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        let pasteItem = NSMenuItem(title: L10n.Menu.paste, action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         pasteItem.keyEquivalentModifierMask = [.command]
         editMenu.addItem(pasteItem)
 
         editMenu.addItem(.separator())
 
-        let copyTapeItem = NSMenuItem(title: "Copia come testo", action: #selector(copyTapeFromMenu(_:)), keyEquivalent: "C")
+        let copyTapeItem = NSMenuItem(title: L10n.Menu.copyText, action: #selector(copyTapeFromMenu(_:)), keyEquivalent: "C")
         copyTapeItem.keyEquivalentModifierMask = [.command, .shift]
         copyTapeItem.target = self
         editMenu.addItem(copyTapeItem)
 
-        let copyPNGItem = NSMenuItem(title: "Copia come immagine", action: #selector(copyVisiblePNGFromMenu(_:)), keyEquivalent: "C")
+        let copyPNGItem = NSMenuItem(title: L10n.Menu.copyImage, action: #selector(copyVisiblePNGFromMenu(_:)), keyEquivalent: "C")
         copyPNGItem.keyEquivalentModifierMask = [.command, .option, .shift]
         copyPNGItem.target = self
         editMenu.addItem(copyPNGItem)
 
-        let viewMenuItem = NSMenuItem(title: "Vista", action: nil, keyEquivalent: "")
+        let viewMenuItem = NSMenuItem(title: L10n.Menu.viewSection, action: nil, keyEquivalent: "")
         mainMenu.addItem(viewMenuItem)
-        let viewMenu = NSMenu(title: "Vista")
+        let viewMenu = NSMenu(title: L10n.Menu.viewSection)
         viewMenuItem.submenu = viewMenu
 
-        let toggleItem = NSMenuItem(title: "Visualizza/Nascondi (\(hotKeyName))", action: #selector(toggleFromMenu(_:)), keyEquivalent: "")
+        let toggleItem = NSMenuItem(title: L10n.Menu.toggleWithHotKey(hotKeyName), action: #selector(toggleFromMenu(_:)), keyEquivalent: "")
         toggleItem.target = self
         viewMenu.addItem(toggleItem)
 
         let screens = NSScreen.screens
         if screens.count > 1 {
-            let moveRoot = NSMenuItem(title: "Sposta su schermo", action: nil, keyEquivalent: "")
-            let moveMenu = NSMenu(title: "Sposta su schermo")
+            let moveRoot = NSMenuItem(title: L10n.Menu.moveToScreen, action: nil, keyEquivalent: "")
+            let moveMenu = NSMenu(title: L10n.Menu.moveToScreen)
             let selectedIndex = settingsStore.loadFormattingSettings().preferredScreenIndex
 
             for index in screens.indices {
-                let item = NSMenuItem(title: "Schermo \(index + 1)", action: #selector(moveToScreenFromMenu(_:)), keyEquivalent: "")
+                let item = NSMenuItem(title: L10n.Menu.screen(index + 1), action: #selector(moveToScreenFromMenu(_:)), keyEquivalent: "")
                 item.tag = index
                 item.state = selectedIndex == index ? .on : .off
                 item.target = self
@@ -338,7 +338,7 @@ public final class FastCalcAppController: NSObject, NSApplicationDelegate {
             moveRoot.submenu = moveMenu
             viewMenu.addItem(moveRoot)
         } else {
-            let moveRoot = NSMenuItem(title: "Sposta su schermo", action: nil, keyEquivalent: "")
+            let moveRoot = NSMenuItem(title: L10n.Menu.moveToScreen, action: nil, keyEquivalent: "")
             moveRoot.isEnabled = false
             viewMenu.addItem(moveRoot)
         }

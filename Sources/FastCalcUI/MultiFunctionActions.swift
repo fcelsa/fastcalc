@@ -46,12 +46,12 @@ struct MultiFunctionActionSet {
 
     static let pMVP = MultiFunctionActionSet(
         trigger: .p,
-        title: "Potenze e radice",
+        title: L10n.MultiFunction.powersAndRootTitle,
         actions: [
-            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.square, title: "x²", detail: "Potenza di 2"),
-            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.cube, title: "x³", detail: "Potenza di 3"),
-            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.powerN, title: "xⁿ", detail: "^n solo interi"),
-            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.squareRoot, title: "\u{221A}", detail: "Radice quadrata")
+            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.square, title: L10n.MultiFunction.squareTitle, detail: L10n.MultiFunction.squareDetail),
+            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.cube, title: L10n.MultiFunction.cubeTitle, detail: L10n.MultiFunction.cubeDetail),
+            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.powerN, title: L10n.MultiFunction.powerNTitle, detail: L10n.MultiFunction.powerNDetail),
+            MultiFunctionActionDescriptor(id: MultiFunctionActionKey.squareRoot, title: L10n.MultiFunction.squareRootTitle, detail: L10n.MultiFunction.squareRootDetail)
         ]
     )
 
@@ -64,7 +64,7 @@ struct MultiFunctionActionSet {
                 detail: detail
             )
         }
-        return MultiFunctionActionSet(trigger: .f, title: "Funzioni utente", actions: mapped)
+        return MultiFunctionActionSet(trigger: .f, title: L10n.MultiFunction.userFunctionsTitle, actions: mapped)
     }
 
     struct HelpContent {
@@ -73,44 +73,30 @@ struct MultiFunctionActionSet {
     }
 
     static func localizedHelpContent() -> HelpContent {
-        let title = localized(
-            "help.title",
-            fallback: "Quick help",
-            comment: "Keyboard help popover title"
-        )
+        let title = L10n.Help.title
 
         let lines: [String] = [
-            localized("help.section.input", fallback: "INPUT", comment: "Input section title"),
-            localized("help.line.numeric", fallback: "- 0-9 , . : numeric input", comment: "Numeric input help line"),
-            localized("help.line.operators", fallback: "- + - * / D % : operators and percentages", comment: "Operators help line"),
+            L10n.Help.sectionInput,
+            L10n.Help.lineNumeric,
+            L10n.Help.lineOperators,
             "",
-            localized("help.section.multifunction", fallback: "MULTI-FUNCTION", comment: "Multi-function section title"),
-            localized("help.line.p", fallback: "- P : powers and square root popover", comment: "P key help line"),
-            localized("help.line.f", fallback: "- F : user functions popover", comment: "F key help line"),
-            localized("help.line.h", fallback: "- H : show/hide this help", comment: "H key toggle help line"),
-            localized("help.line.popover.select", fallback: "- 1..9 / arrows / Enter / Esc : popover selection", comment: "Popover selection help line"),
+            L10n.Help.sectionMultiFunction,
+            L10n.Help.lineP,
+            L10n.Help.lineF,
+            L10n.Help.lineH,
+            L10n.Help.linePopoverSelect,
             "",
-            localized("help.section.calc", fallback: "CALCULATION & MEMORY", comment: "Calculation and memory section title"),
-            localized("help.line.result", fallback: "- Enter or = or T : result", comment: "Result key help line"),
-            localized("help.line.fifo", fallback: "- M / R : FIFO totalizer", comment: "FIFO memory help line"),
+            L10n.Help.sectionCalc,
+            L10n.Help.lineResult,
+            L10n.Help.lineFifo,
             "",
-            localized("help.section.edit", fallback: "EDIT", comment: "Edit section title"),
-            localized("help.line.backspace", fallback: "- Backspace : delete one character", comment: "Backspace help line"),
-            localized("help.line.delete", fallback: "- Delete x2 : full reset", comment: "Double delete help line"),
-            localized("help.line.optionDelete", fallback: "- Option + Delete x2 : reset + position", comment: "Option delete help line"),
-            localized("help.line.undo", fallback: "- Cmd+Z : undo full clear", comment: "Undo full clear help line")
+            L10n.Help.sectionEdit,
+            L10n.Help.lineBackspace,
+            L10n.Help.lineDelete,
+            L10n.Help.lineOptionDelete,
+            L10n.Help.lineUndo
         ]
 
         return HelpContent(title: title, lines: lines)
-    }
-
-    private static func localized(_ key: String, fallback: String, comment: String) -> String {
-        NSLocalizedString(
-            key,
-            tableName: nil,
-            bundle: .main,
-            value: fallback,
-            comment: comment
-        )
     }
 }

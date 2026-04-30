@@ -14,7 +14,7 @@ public final class AboutWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "Informazioni su FastCalc"
+        window.title = L10n.About.windowTitle
         window.isReleasedWhenClosed = false
         window.center()
 
@@ -78,13 +78,13 @@ public final class AboutWindowController: NSWindowController {
             ?? (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String)
             ?? ProcessInfo.processInfo.processName
 
-        let shortVersion = (bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "Debug session"
-        let buildVersion = (bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "swift run"
+        let shortVersion = (bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? L10n.About.debugShortVersion
+        let buildVersion = (bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? L10n.About.debugBuildVersion
 
         appIconView.image = resolvedAppIcon()
         appNameLabel.stringValue = appName
-        descriptionLabel.stringValue = "Calcolatrice veloce con tape e stampa PDF"
-        versionLabel.stringValue = "Versione \(shortVersion) (build \(buildVersion))"
+        descriptionLabel.stringValue = L10n.About.description
+        versionLabel.stringValue = L10n.About.versionLine(shortVersion, buildVersion)
     }
 
     private func resolvedAppIcon() -> NSImage {

@@ -1,73 +1,56 @@
-## Localizzazione — guida rapida
+## Localizzazione FastCalc
 
-Questa breve guida spiega le convenzioni usate nel progetto per i file di localizzazione `.lproj`, come organizzare le chiavi, e approfondisce l'uso di `.stringsdict` per i plurali e le varianti locali.
+Questa guida definisce il flusso i18n del progetto dopo l'introduzione del layer centralizzato `L10n`.
 
-1) Posizione dei file
-- Metti i file di lingua sotto `Sources/<Target>/Resources/<locale>.lproj/` (es. `Sources/fastcalc/Resources/en.lproj/`). SwiftPM include automaticamente `Resources` nei bundle dei target.
+### 1. Punto di accesso unico
+- Tutte le stringhe UI devono passare da `Sources/FastCalcUI/L10n.swift`.
+- Non usare `NSLocalizedString` direttamente nei controller/view model, salvo casi eccezionali documentati.
+- I fallback esistono solo in `L10n.swift`.
 
-2) Formato e encoding
-- File `.strings`: sintassi `"key" = "value";`.
-- Xcode storicamente preferisce UTF-16 con BOM; strumenti moderni (e `swift build`) funzionano anche con UTF-8, ma conservare UTF-16 evita incompatibilità con tooling Apple.
+### 1.1 Risoluzione lingua a runtime (linee guida Apple)
+- L'app non forza manualmente una lingua con override custom su `AppleLanguages`.
+- All'avvio, `Sources/fastcalc/LocalizationBootstrap.swift` legge la configurazione effettiva tramite API Foundation:
+  - `Locale.preferredLanguages`
+  - `Bundle.main.localizations`
+  - `Bundle.preferredLocalizations(from:forPreferences:)`
+- Questo approccio rispetta il comportamento standard Apple, inclusi gli override per-app impostati in macOS (Generali > Lingua e zona > Applicazioni).
 
-3) Commenti e contesto per i traduttori
-- Usa commenti C-style `/* ... */` prima della stringa per fornire contesto. I commenti possono essere generati automaticamente con `genstrings` o con tool di estrazione.
-- Includi dove possibile uno screenshot o una breve nota su dove la stringa è mostrata.
+### 1.2 Layout bundle in distribuzione (.app)
+- In esecuzione da `swift run`, SwiftPM mantiene le localizzazioni nel bundle risorse separato (es. `fastcalc_fastcalc.bundle`).
+- In distribuzione `.app`, `buildapp.sh` copia sia:
+  - il bundle risorse SwiftPM in `Contents/Resources/fastcalc_fastcalc.bundle`
+  - le cartelle lingua direttamente in `Contents/Resources/*.lproj` (es. `en.lproj`, `it.lproj`)
+- Questo allinea FastCalc al layout standard delle app macOS e rende robusta la risoluzione con `Bundle.main`.
 
-4) Convenzioni chiavi
-- Usa chiavi semantiche/gerarchiche (es. `help.section.input`).
-- Mantieni `en.lproj/Localizable.strings` come sorgente di riferimento.
+### 2. Convenzione chiavi
+- Formato: `feature.scope.item`.
+- Esempi: `menu.item.print`, `settings.hint.hotKeyUpdated`, `roll.print.footer.pageOf`.
+- Evita chiavi duplicate o varianti con casing incoerente.
 
-5) Placeholder
-- Usa specificatori posizionali quando servono riordinamenti: `%1$@`, `%2$d`.
-- Documenta i placeholder con commenti (es. `/* %1$@ = user name */`).
+### 3. Risorse lingua
+- File attivi:
+  - `Sources/fastcalc/Resources/en.lproj/Localizable.strings`
+  - `Sources/fastcalc/Resources/it.lproj/Localizable.strings`
+- `en` è lingua di riferimento.
+- Ogni nuova chiave deve essere aggiunta in entrambe le lingue nello stesso commit.
 
-6) Workflow e automazione
-- Strumenti utili: `genstrings`, `SwiftGen`, `BartyCrouch`, servizi di localizzazione (Crowdin, Lokalise, ecc.).
-- Aggiungi un `Resources/LOCALIZATION.md` (questo) con regole e comandi per i contributori.
+### 4. Placeholder
+- Usa placeholder posizionali per stringhe dinamiche: `%1$@`, `%1$d`, `%2$d`.
+- Le lingue devono mantenere stessi placeholder e stessi tipi.
+- Esempi in uso:
+  - `menu.item.toggleWithHotKey`
+  - `settings.hint.hotKeyUpdated`
+  - `roll.print.footer.pageOf`
 
-7) `.stringsdict` — approfondimento
-.stringsdict è il formato usato per gestire plurali e varianti locali complesse. È un file plist che mappa una chiave a regole di pluralizzazione (e altre regole di format). Esempi d'uso:
+### 5. stringsdict
+- Usare `Localizable.stringsdict` solo se servono plurali/varianti grammaticali reali.
+- Se non è usato da chiavi runtime, non mantenerlo come file di esempio.
 
-- Chiave in `Localizable.strings`:
-  "files.count" = "%#@files@";
-
-- Corrispondente `Localizable.stringsdict` (esempio per inglese):
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>files.count</key>
-  <dict>
-    <key>NSStringLocalizedFormatKey</key>
-    <string>%#@files@</string>
-    <key>files</key>
-    <dict>
-      <key>NSStringFormatSpecTypeKey</key>
-      <string>NSStringPluralRuleType</string>
-      <key>NSStringFormatValueTypeKey</key>
-      <string>d</string>
-      <key>one</key>
-      <string>1 file</string>
-      <key>other</key>
-      <string>%d files</string>
-    </dict>
-  </dict>
-</dict>
-</plist>
-```
-
-- Come usarlo in codice (Swift):
-
-```swift
-let count = 3
-let format = NSLocalizedString("files.count", comment: "Number of files")
-let message = String.localizedStringWithFormat(format, count)
-```
-
-- Nota: per lingue con regole più complesse (es. russo, arabo), `.stringsdict` permette di definire le forme richieste dal linguaggio.
-
-8) Test e CI
-- Aggiungi un job CI che verifica che tutte le chiavi usate nel codice esistano in `en.lproj` e che i placeholder coincidano (es. con uno script o `BartyCrouch lint`).
+### 6. Checklist contributor
+- Aggiungi/modifica la chiave in `L10n.swift`.
+- Aggiorna EN e IT.
+- Verifica assenza di hardcoded UI nei file toccati.
+- Esegui `swift test`.
+- Se tocchi packaging/localizzazione, esegui `./buildapp.sh` e verifica che in `dist/FastCalc.app/Contents/Resources` esistano `en.lproj` e `it.lproj`.
+- Verifica manuale rapida menu, settings, popover help, popover multifunzione, export PDF.
 

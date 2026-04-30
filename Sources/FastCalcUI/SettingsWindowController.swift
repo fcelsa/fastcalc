@@ -47,29 +47,29 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
     // MARK: - Shared UI
 
-    private let sectionSelector = NSSegmentedControl(labels: ["Generale", "Funzioni utente"], trackingMode: .selectOne, target: nil, action: nil)
+    private let sectionSelector = NSSegmentedControl(labels: [L10n.Settings.tabGeneral, L10n.Settings.tabFunctions], trackingMode: .selectOne, target: nil, action: nil)
     private let generalSectionContainer = NSView(frame: .zero)
     private let functionsSectionContainer = NSView(frame: .zero)
-    private let defaultsButton = NSButton(title: "Default", target: nil, action: nil)
-    private let okButton = NSButton(title: "OK", target: nil, action: nil)
+    private let defaultsButton = NSButton(title: L10n.Settings.buttonDefault, target: nil, action: nil)
+    private let okButton = NSButton(title: L10n.Settings.buttonOk, target: nil, action: nil)
 
     // MARK: - General tab UI
 
     private let decimalsPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let roundingPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let previewValueLabel = NSTextField(labelWithString: "")
-    private let allSpacesCheckbox = NSButton(checkboxWithTitle: "Visibile in tutti gli Spaces", target: nil, action: nil)
+    private let allSpacesCheckbox = NSButton(checkboxWithTitle: L10n.Settings.allSpaces, target: nil, action: nil)
     private let defaultScreenPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let defaultScreenHintLabel = NSTextField(labelWithString: "")
-    private let floatingWindowCheckbox = NSButton(checkboxWithTitle: "Mostra barra del titolo", target: nil, action: nil)
-    private let alwaysOnTopCheckbox = NSButton(checkboxWithTitle: "Sempre in primo piano", target: nil, action: nil)
+    private let floatingWindowCheckbox = NSButton(checkboxWithTitle: L10n.Settings.showTitleBar, target: nil, action: nil)
+    private let alwaysOnTopCheckbox = NSButton(checkboxWithTitle: L10n.Settings.alwaysOnTop, target: nil, action: nil)
     private let startupModePopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let hotKeyValueLabel = NSTextField(labelWithString: "")
-    private let hotKeyCaptureButton = NSButton(title: "Registra", target: nil, action: nil)
-    private let hotKeyResetButton = NSButton(title: "Default", target: nil, action: nil)
+    private let hotKeyCaptureButton = NSButton(title: L10n.Settings.buttonRegister, target: nil, action: nil)
+    private let hotKeyResetButton = NSButton(title: L10n.Settings.buttonDefault, target: nil, action: nil)
     private let hotKeyHintLabel = NSTextField(labelWithString: "")
-    private let menuBarIconCheckbox = NSButton(checkboxWithTitle: "Icona menu", target: nil, action: nil)
-    private let dockIconCheckbox = NSButton(checkboxWithTitle: "Icona nel Dock", target: nil, action: nil)
+    private let menuBarIconCheckbox = NSButton(checkboxWithTitle: L10n.Settings.menuBarIcon, target: nil, action: nil)
+    private let dockIconCheckbox = NSButton(checkboxWithTitle: L10n.Settings.dockIcon, target: nil, action: nil)
     private let iconVisibilityWarningLabel = NSTextField(labelWithString: "")
     private let activeOpacitySlider = NSSlider(value: 90, minValue: 10, maxValue: 100, target: nil, action: nil)
     private let activeOpacityLabel = NSTextField(labelWithString: "")
@@ -83,7 +83,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     private let functionNameField = NSTextField(string: "")
     private let functionNoteField = NSTextField(string: "")
     private let functionExpressionField = NSTextField(string: "")
-    private let functionResultOnlyCheckbox = NSButton(checkboxWithTitle: "Result only", target: nil, action: nil)
+    private let functionResultOnlyCheckbox = NSButton(checkboxWithTitle: L10n.Settings.resultOnly, target: nil, action: nil)
     private let functionHintLabel = NSTextField(labelWithString: "")
 
     public init(settingsStore: AppSettingsStore = .shared) {
@@ -95,7 +95,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
             backing: .buffered,
             defer: false
         )
-        window.title = "Impostazioni"
+        window.title = L10n.Settings.windowTitle
         window.isReleasedWhenClosed = false
         window.center()
 
@@ -204,12 +204,12 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     /// Builds the general settings pane with grouped form rows aligned on a shared label column.
     private func buildGeneralSectionView() -> NSView {
         let formattingRows = buildFormRows(rows: [
-            ("Decimali", decimalsPopup),
-            ("Arrotondamento", buildRoundingPreviewRow())
+            (L10n.Settings.decimalsLabel, decimalsPopup),
+            (L10n.Settings.roundingLabel, buildRoundingPreviewRow())
         ], controlWidth: nil)
 
         let behaviorRows = buildFormRows(rows: [
-            ("Vista", buildCheckboxRow([allSpacesCheckbox, floatingWindowCheckbox, alwaysOnTopCheckbox])),
+            (L10n.Settings.viewLabel, buildCheckboxRow([allSpacesCheckbox, floatingWindowCheckbox, alwaysOnTopCheckbox])),
             (nil, buildStartupAndScreenRow())
         ], controlWidth: nil)
 
@@ -217,7 +217,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
             (nil, buildOpacityControlsRow()),
             (nil, buildIconVisibilityRow()),
             (nil, iconVisibilityWarningLabel),
-            ("Hotkey globale", buildHotKeyRow())
+            (L10n.Settings.hotKeyLabel, buildHotKeyRow())
         ], controlWidth: nil)
 
         let content = NSStackView(views: [
@@ -268,9 +268,9 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         sidebar.spacing = 8
 
         let inspectorRows = buildFormRows(rows: [
-            ("Nome", functionNameField),
-            ("Nota", functionNoteField),
-            ("Calcolo", functionExpressionField),
+            (L10n.Settings.functionNameLabel, functionNameField),
+            (L10n.Settings.functionNoteLabel, functionNoteField),
+            (L10n.Settings.functionExpressionLabel, functionExpressionField),
             (nil, functionResultOnlyCheckbox)
         ])
 
@@ -328,10 +328,10 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         sectionSelector.segmentStyle = .rounded
         sectionSelector.setWidth(156, forSegment: Section.general.rawValue)
         sectionSelector.setWidth(156, forSegment: Section.functions.rawValue)
-        if let generalImage = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: "Generale") {
+        if let generalImage = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: L10n.Settings.tabGeneral) {
             sectionSelector.setImage(generalImage, forSegment: Section.general.rawValue)
         }
-        if let functionsImage = NSImage(systemSymbolName: "function", accessibilityDescription: "Funzioni") {
+        if let functionsImage = NSImage(systemSymbolName: "function", accessibilityDescription: L10n.Settings.tabFunctions) {
             sectionSelector.setImage(functionsImage, forSegment: Section.functions.rawValue)
         }
 
@@ -349,12 +349,12 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
     private func configureGeneralControls() {
         configurePopup(decimalsPopup, minimumWidth: 72)
-        decimalsPopup.addItems(withTitles: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "FL"])
+        decimalsPopup.addItems(withTitles: ["0", "1", "2", "3", "4", "5", "6", "7", "8", L10n.Settings.decimalsFloatingOption])
         decimalsPopup.target = self
         decimalsPopup.action = #selector(decimalsChanged)
 
         configurePopup(roundingPopup, minimumWidth: 120)
-        roundingPopup.addItems(withTitles: ["Difetto", "Medio", "Eccesso"])
+        roundingPopup.addItems(withTitles: [L10n.Settings.roundingDown, L10n.Settings.roundingNearest, L10n.Settings.roundingUp])
         roundingPopup.target = self
         roundingPopup.action = #selector(roundingChanged)
 
@@ -378,7 +378,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         alwaysOnTopCheckbox.action = #selector(windowBehaviorChanged)
 
         configurePopup(startupModePopup, minimumWidth: 110)
-        startupModePopup.addItems(withTitles: ["Default", "Nascosta", "Visibile"])
+        startupModePopup.addItems(withTitles: [L10n.Settings.startupDefault, L10n.Settings.startupHidden, L10n.Settings.startupVisible])
         startupModePopup.target = self
         startupModePopup.action = #selector(windowBehaviorChanged)
 
@@ -440,18 +440,18 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         functionListActionsControl.action = #selector(handleFunctionListAction)
         functionListActionsControl.setWidth(28, forSegment: 0)
         functionListActionsControl.setWidth(28, forSegment: 1)
-        functionListActionsControl.setImage(NSImage(named: NSImage.addTemplateName) ?? NSImage(systemSymbolName: "plus", accessibilityDescription: "Aggiungi"), forSegment: 0)
-        functionListActionsControl.setImage(NSImage(named: NSImage.removeTemplateName) ?? NSImage(systemSymbolName: "minus", accessibilityDescription: "Rimuovi"), forSegment: 1)
+        functionListActionsControl.setImage(NSImage(named: NSImage.addTemplateName) ?? NSImage(systemSymbolName: "plus", accessibilityDescription: L10n.Settings.addActionAccessibility), forSegment: 0)
+        functionListActionsControl.setImage(NSImage(named: NSImage.removeTemplateName) ?? NSImage(systemSymbolName: "minus", accessibilityDescription: L10n.Settings.removeActionAccessibility), forSegment: 1)
 
-        functionNameField.placeholderString = "Nome funzione"
+        functionNameField.placeholderString = L10n.Settings.functionNamePlaceholder
         functionNameField.delegate = self
         functionNameField.widthAnchor.constraint(greaterThanOrEqualToConstant: Metrics.formFieldWidth).isActive = true
 
-        functionNoteField.placeholderString = "Nota breve (max 12)"
+        functionNoteField.placeholderString = L10n.Settings.functionNotePlaceholder
         functionNoteField.delegate = self
         functionNoteField.widthAnchor.constraint(greaterThanOrEqualToConstant: 160).isActive = true
 
-        functionExpressionField.placeholderString = "Calcolo con x, es: (x*1.22)+5"
+        functionExpressionField.placeholderString = L10n.Settings.functionExpressionPlaceholder
         functionExpressionField.delegate = self
         functionExpressionField.widthAnchor.constraint(greaterThanOrEqualToConstant: Metrics.formFieldWidth).isActive = true
 
@@ -460,7 +460,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
         functionHintLabel.font = .systemFont(ofSize: 11)
         functionHintLabel.textColor = .secondaryLabelColor
-        functionHintLabel.stringValue = "Usa x (o {x}) come operando corrente. Disattiva Result only per sviluppare nel roll solo espressioni digitabili dalla tastiera."
+        functionHintLabel.stringValue = L10n.Settings.functionHint
     }
 
     // MARK: - View helpers
@@ -527,15 +527,15 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     }
 
     private func buildRoundingPreviewRow() -> NSView {
-        let exampleLabel = makeInlineLabel("Esempio")
+        let exampleLabel = makeInlineLabel(L10n.Settings.exampleLabel)
         let filler = NSView()
         filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
         return buildHorizontalRow([roundingPopup, exampleLabel, previewValueLabel, filler], spacing: 12)
     }
 
     private func buildStartupAndScreenRow() -> NSView {
-        let startupLabel = makeInlineLabel("Apertura all'avvio")
-        let screenLabel = makeInlineLabel("Schermo di default")
+        let startupLabel = makeInlineLabel(L10n.Settings.startupModeLabel)
+        let screenLabel = makeInlineLabel(L10n.Settings.defaultScreenLabel)
         let filler = NSView()
         filler.setContentHuggingPriority(.defaultLow, for: .horizontal)
         return buildHorizontalRow([startupLabel, startupModePopup, screenLabel, defaultScreenPopup, filler], spacing: Metrics.inlineControlSpacing)
@@ -547,8 +547,8 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         activeOpacityLabel.widthAnchor.constraint(equalToConstant: 36).isActive = true
         inactiveOpacityLabel.widthAnchor.constraint(equalToConstant: 36).isActive = true
 
-        let activeLabel = makeInlineLabel("Opacita attiva")
-        let inactiveLabel = makeInlineLabel("Opacita inattiva")
+        let activeLabel = makeInlineLabel(L10n.Settings.activeOpacityLabel)
+        let inactiveLabel = makeInlineLabel(L10n.Settings.inactiveOpacityLabel)
         let activeGroup = buildHorizontalRow([activeLabel, activeOpacitySlider, activeOpacityLabel], spacing: 8)
         let inactiveGroup = buildHorizontalRow([inactiveLabel, inactiveOpacitySlider, inactiveOpacityLabel], spacing: 8)
         let filler = NSView()
@@ -635,7 +635,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     private func applyDraftToUI() {
         switch draftSettings.decimalMode {
         case .floating:
-            decimalsPopup.selectItem(withTitle: "FL")
+            decimalsPopup.selectItem(withTitle: L10n.Settings.decimalsFloatingOption)
         case .fixed:
             decimalsPopup.selectItem(withTitle: String(max(0, min(8, draftSettings.fixedDecimalPlaces))))
         }
@@ -666,7 +666,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
         hotKeyValueLabel.stringValue = draftSettings.globalHotKey.displayName
         if !isCapturingHotKey {
-            hotKeyHintLabel.stringValue = "Evita combinazioni gia usate dal sistema (es. Cmd+Space, Cmd+Tab)."
+            hotKeyHintLabel.stringValue = L10n.Settings.hotKeyHintAvoidReserved
             hotKeyHintLabel.textColor = .secondaryLabelColor
         }
 
@@ -680,7 +680,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
     /// Copies the current general-pane control values into the draft model.
     private func updateDraftFromUI() {
-        if decimalsPopup.titleOfSelectedItem == "FL" {
+        if decimalsPopup.titleOfSelectedItem == L10n.Settings.decimalsFloatingOption {
             draftSettings.decimalMode = .floating
             draftSettings.fixedDecimalPlaces = 2
         } else {
@@ -769,21 +769,21 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         let screens = NSScreen.screens
         defaultScreenPopup.removeAllItems()
         for index in screens.indices {
-            defaultScreenPopup.addItem(withTitle: "Schermo \(index + 1)")
+            defaultScreenPopup.addItem(withTitle: L10n.Settings.screen(index + 1))
         }
 
         if screens.count <= 1 {
             if defaultScreenPopup.numberOfItems == 0 {
-                defaultScreenPopup.addItem(withTitle: "Schermo 1")
+                defaultScreenPopup.addItem(withTitle: L10n.Settings.screen(1))
             }
             defaultScreenPopup.selectItem(at: 0)
             defaultScreenPopup.isEnabled = false
-            defaultScreenHintLabel.stringValue = "Opzione attiva solo con piu schermi collegati."
+            defaultScreenHintLabel.stringValue = L10n.Settings.screenSingleHint
         } else {
             defaultScreenPopup.isEnabled = true
             let preferredIndex = min(max(0, draftSettings.preferredScreenIndex ?? 0), screens.count - 1)
             defaultScreenPopup.selectItem(at: preferredIndex)
-            defaultScreenHintLabel.stringValue = "Usato per apertura e riposizionamento finestra."
+            defaultScreenHintLabel.stringValue = L10n.Settings.screenMultipleHint
         }
     }
 
@@ -801,7 +801,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         let menuBarEnabled = menuBarIconCheckbox.state == .on
         let dockEnabled = dockIconCheckbox.state == .on
         if !menuBarEnabled && !dockEnabled {
-            iconVisibilityWarningLabel.stringValue = "Disabilitando entrambe le icone, l'unico modo per riportare in primo piano l'app sarà la hotkey globale."
+            iconVisibilityWarningLabel.stringValue = L10n.Settings.iconVisibilityWarning
         } else {
             iconVisibilityWarningLabel.stringValue = ""
         }
@@ -857,7 +857,12 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     }
 
     private func addFunction() {
-        let function = UserDefinedFunction(label: "Nuova funzione", note: "", expression: "x", resultOnly: true)
+        let function = UserDefinedFunction(
+            label: L10n.Settings.functionDefaultName,
+            note: "",
+            expression: L10n.Settings.functionDefaultExpression,
+            resultOnly: true
+        )
         draftFunctions.append(function)
         selectedFunctionIndex = draftFunctions.count - 1
         persistUserFunctions()
@@ -889,7 +894,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         stopHotKeyCapture(cancelled: true)
         draftSettings.globalHotKey = .f16
         hotKeyValueLabel.stringValue = draftSettings.globalHotKey.displayName
-        hotKeyHintLabel.stringValue = "Hotkey ripristinata su F16."
+        hotKeyHintLabel.stringValue = L10n.Settings.hotKeyHintRestoredDefault
         hotKeyHintLabel.textColor = .secondaryLabelColor
     }
 
@@ -927,8 +932,8 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
     private func startHotKeyCapture() {
         stopHotKeyCapture(cancelled: true)
         isCapturingHotKey = true
-        hotKeyCaptureButton.title = "Annulla"
-        hotKeyHintLabel.stringValue = "Premi la nuova combinazione. Esc per annullare."
+        hotKeyCaptureButton.title = L10n.Settings.buttonCancel
+        hotKeyHintLabel.stringValue = L10n.Settings.hotKeyHintPressNew
         hotKeyHintLabel.textColor = .secondaryLabelColor
 
         hotKeyCaptureMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { [weak self] event in
@@ -945,9 +950,9 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
         if isCapturingHotKey {
             isCapturingHotKey = false
-            hotKeyCaptureButton.title = "Registra"
+            hotKeyCaptureButton.title = L10n.Settings.buttonRegister
             if cancelled {
-                hotKeyHintLabel.stringValue = "Registrazione annullata."
+                hotKeyHintLabel.stringValue = L10n.Settings.hotKeyHintRegistrationCancelled
                 hotKeyHintLabel.textColor = .secondaryLabelColor
             }
         }
@@ -955,7 +960,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
     private func handleHotKeyCapture(_ event: NSEvent) -> NSEvent? {
         if event.type == .flagsChanged {
-            hotKeyHintLabel.stringValue = "I soli tasti modificatori non sono validi."
+            hotKeyHintLabel.stringValue = L10n.Errors.hotKeyModifierOnly
             hotKeyHintLabel.textColor = .systemRed
             return nil
         }
@@ -985,7 +990,7 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         case .valid:
             draftSettings.globalHotKey = candidate
             hotKeyValueLabel.stringValue = candidate.displayName
-            hotKeyHintLabel.stringValue = "Hotkey aggiornata: \(candidate.displayName)."
+            hotKeyHintLabel.stringValue = L10n.Settings.hotKeyUpdated(candidate.displayName)
             hotKeyHintLabel.textColor = .secondaryLabelColor
             stopHotKeyCapture(cancelled: false)
         }
@@ -1010,19 +1015,19 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
 
     private static func validateHotKey(_ hotKey: GlobalHotKey) -> HotKeyValidationResult {
         if isModifierOnlyKeyCode(hotKey.keyCode) {
-            return .invalid("I soli tasti modificatori non sono consentiti.")
+            return .invalid(L10n.Errors.hotKeyModifierOnly)
         }
 
         if !hotKey.isFunctionKey && !hotKey.hasModifiers {
-            return .invalid("Per tasti non funzione usa almeno un modificatore (Cmd/Opt/Ctrl/Shift).")
+            return .invalid(L10n.Errors.hotKeyModifierRequired)
         }
 
         if isHardBlockedShortcut(hotKey) {
-            return .invalid("Combinazione riservata o troppo invasiva: scegli un'altra hotkey.")
+            return .invalid(L10n.Errors.hotKeyBlocked)
         }
 
         if isLikelyReservedShortcut(hotKey) {
-            return .warning("Combinazione probabilmente riservata dal sistema: verifica che funzioni sul tuo Mac.")
+            return .warning(L10n.Errors.hotKeyLikelyReserved)
         }
 
         return .valid
@@ -1075,9 +1080,9 @@ public final class SettingsWindowController: NSWindowController, NSTableViewData
         let note = String(functionNoteField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).prefix(12))
         let expression = functionExpressionField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        draftFunctions[selectedFunctionIndex].label = name.isEmpty ? "Nuova funzione" : name
+        draftFunctions[selectedFunctionIndex].label = name.isEmpty ? L10n.Settings.functionDefaultName : name
         draftFunctions[selectedFunctionIndex].note = note
-        draftFunctions[selectedFunctionIndex].expression = expression.isEmpty ? "x" : expression
+        draftFunctions[selectedFunctionIndex].expression = expression.isEmpty ? L10n.Settings.functionDefaultExpression : expression
         draftFunctions[selectedFunctionIndex].resultOnly = functionResultOnlyCheckbox.state == .on
 
         if functionNoteField.stringValue != draftFunctions[selectedFunctionIndex].note {
