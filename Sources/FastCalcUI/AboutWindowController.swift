@@ -2,6 +2,7 @@ import AppKit
 
 @MainActor
 public final class AboutWindowController: NSWindowController {
+    private let appIconView = NSImageView(frame: .zero)
     private let appNameLabel = NSTextField(labelWithString: "")
     private let descriptionLabel = NSTextField(labelWithString: "")
     private let versionLabel = NSTextField(labelWithString: "")
@@ -37,6 +38,14 @@ public final class AboutWindowController: NSWindowController {
     private func setupView() {
         guard let contentView = window?.contentView else { return }
 
+        appIconView.imageAlignment = .alignCenter
+        appIconView.imageScaling = .scaleProportionallyUpOrDown
+        appIconView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            appIconView.widthAnchor.constraint(equalToConstant: 72),
+            appIconView.heightAnchor.constraint(equalToConstant: 72)
+        ])
+
         appNameLabel.font = .systemFont(ofSize: 24, weight: .semibold)
         appNameLabel.alignment = .center
 
@@ -47,7 +56,7 @@ public final class AboutWindowController: NSWindowController {
         versionLabel.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
         versionLabel.alignment = .center
 
-        let stack = NSStackView(views: [appNameLabel, descriptionLabel, versionLabel])
+        let stack = NSStackView(views: [appIconView, appNameLabel, descriptionLabel, versionLabel])
         stack.orientation = .vertical
         stack.alignment = .centerX
         stack.spacing = 10
@@ -72,8 +81,20 @@ public final class AboutWindowController: NSWindowController {
         let shortVersion = (bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "Debug session"
         let buildVersion = (bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "swift run"
 
+        appIconView.image = resolvedAppIcon()
         appNameLabel.stringValue = appName
         descriptionLabel.stringValue = "Calcolatrice veloce con tape e stampa PDF"
         versionLabel.stringValue = "Versione \(shortVersion) (build \(buildVersion))"
+    }
+
+    private func resolvedAppIcon() -> NSImage {
+        if let appIcon = NSApp.applicationIconImage,
+           appIcon.size.width > 0,
+           appIcon.size.height > 0
+        {
+            return appIcon
+        }
+
+        return NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
     }
 }
