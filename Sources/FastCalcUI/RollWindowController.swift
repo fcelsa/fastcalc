@@ -296,18 +296,34 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private let scrollView: NSScrollView
     private let tableView: TapeTableView
 
-    private var committedRows: [TapeRow] = []
-    private var draftInput = ""
+    private var committedRows: [TapeRow] = [] {
+        didSet { invalidateDisplayRowsCache() }
+    }
+    private var draftInput = "" {
+        didSet { invalidateDisplayRowsCache() }
+    }
     private var draftCursor = 0
     private var hasPendingLeadingNegativeSign = false
-    private var isNoteModeActive = false
-    private var noteEditingRow: Int?
+    private var isNoteModeActive = false {
+        didSet { invalidateDisplayRowsCache() }
+    }
+    private var noteEditingRow: Int? {
+        didSet { invalidateDisplayRowsCache() }
+    }
     private var noteOriginalText = ""
-    private var noteDraftInput = ""
-    private var isTextModeActive = false
-    private var textEditingRow: Int?
+    private var noteDraftInput = "" {
+        didSet { invalidateDisplayRowsCache() }
+    }
+    private var isTextModeActive = false {
+        didSet { invalidateDisplayRowsCache() }
+    }
+    private var textEditingRow: Int? {
+        didSet { invalidateDisplayRowsCache() }
+    }
     private var textOriginalText = ""
-    private var textDraftInput = ""
+    private var textDraftInput = "" {
+        didSet { invalidateDisplayRowsCache() }
+    }
     private var editingCommittedRow: Int?
     private var isEditingModeActive = false
     private var pendingPercentTrace: PercentTrace?
@@ -331,6 +347,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private let maxWindowHeightFraction: CGFloat = 0.80
     private var hasInputFocus = false
     private var markerSelectedRow = -1
+    private var cachedDisplayRows: [TapeRow]?
 
     private let statusBarView = NSView(frame: .zero)
     private let statusLedView = StatusLedView(frame: .zero)
@@ -344,6 +361,15 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private static let totalSeparatorMarker = "__SEP__"
     private static let totalSeparatorGlyph = "—"
     private static let defaultVersion = "1.0"
+    private static let rawDecimalFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.locale = .current
+        formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = false
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 16
+        return formatter
+    }()
 
     public var onEscapeFocusReturnRequested: (@MainActor () -> Void)?
 
@@ -510,14 +536,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func localizedRawDecimalString(_ value: Decimal) -> String {
-        let formatter = NumberFormatter()
-        formatter.locale = .current
-        formatter.numberStyle = .decimal
-        formatter.usesGroupingSeparator = false
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 16
-
-        if let localized = formatter.string(from: NSDecimalNumber(decimal: value)) {
+        if let localized = Self.rawDecimalFormatter.string(from: NSDecimalNumber(decimal: value)) {
             return localized
         }
 
@@ -1441,18 +1460,29 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     private var cellColor: NSColor = .labelColor
     private var calcTableColumn: NSTableColumn?
 
+    private func invalidateDisplayRowsCache() {
+        cachedDisplayRows = nil
+    }
+
     private func displayRows() -> [TapeRow] {
+        if let cachedDisplayRows {
+            return cachedDisplayRows
+        }
+
         var rows = committedRows
         if isTextModeActive, textEditingRow == nil {
             rows.append(TapeRow(special: "", calc: textDraftInput, operand: "#", kind: .text))
+            cachedDisplayRows = rows
             return rows
         }
         if isNoteModeActive, noteEditingRow == nil {
             rows.append(TapeRow(special: "", calc: "", operand: "", annotation: noteDraftInput, kind: .note))
+            cachedDisplayRows = rows
             return rows
         }
         let draftCalc = draftInput.isEmpty ? "" : (TapeFormatter.parseLocaleAwareDecimal(draftInput).map(TapeFormatter.formatDecimalForColumn) ?? draftInput)
         rows.append(TapeRow(special: "", calc: draftCalc, operand: "", kind: .draft))
+        cachedDisplayRows = rows
         return rows
     }
 
@@ -1476,6 +1506,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
     }
 
     private func reloadTape(moveToDraft: Bool) {
+        invalidateDisplayRowsCache()
         tableView.reloadData()
         adjustWindowHeight(forDisplayedRows: displayRows().count)
         updateStatusRow()
@@ -2703,12 +2734,29 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             hasPendingLeadingNegativeSign = false
         }
 
+        let isDecimalSeparator = (ch == "," || ch == ".")
+        if isDecimalSeparator,
+           draftInput.contains(where: { $0 == "," || $0 == "." })
+        {
+            // Ignore additional decimal separators after the first one.
+            return
+        }
+
         _ = engine.inputCharacter(ch)
 
         let index = min(max(0, draftCursor), draftInput.count)
-        let strIndex = draftInput.index(draftInput.startIndex, offsetBy: index)
-        draftInput.insert(ch, at: strIndex)
-        draftCursor = index + 1
+        if isDecimalSeparator, draftInput.isEmpty {
+            draftInput = "0,"
+            draftCursor = draftInput.count
+        } else if isDecimalSeparator, draftInput == "-" {
+            draftInput = "-0,"
+            draftCursor = draftInput.count
+        } else {
+            let strIndex = draftInput.index(draftInput.startIndex, offsetBy: index)
+            let insertedCharacter: Character = isDecimalSeparator ? "," : ch
+            draftInput.insert(insertedCharacter, at: strIndex)
+            draftCursor = index + 1
+        }
 
         reloadTape(moveToDraft: true)
         saveCurrentState(isVisible: window?.isVisible ?? false)
@@ -3286,8 +3334,7 @@ public final class RollWindowController: NSWindowController, NSWindowDelegate, N
             if data.kind == .separator {
                 text = cursorMark
             } else if data.kind != .draft {
-                let allRows = displayRows()
-                let count = allRows[0...row].filter { $0.kind != .draft && $0.kind != .separator }.count
+                let count = rows[0...row].filter { $0.kind != .draft && $0.kind != .separator }.count
                 text = cursorMark + String(count)
             } else {
                 text = cursorMark

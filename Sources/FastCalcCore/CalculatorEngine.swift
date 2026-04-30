@@ -1,6 +1,16 @@
 import Foundation
 
 public final class CalculatorEngine: @unchecked Sendable {
+    private let outputFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.maximumFractionDigits = 8
+        formatter.minimumFractionDigits = 0
+        formatter.minimumIntegerDigits = 1
+        formatter.numberStyle = .decimal
+        return formatter
+    }()
+
     private var currentInput = ""
     private var register: Decimal?
     private var pendingOperator: CalculatorOperator?
@@ -431,12 +441,6 @@ public final class CalculatorEngine: @unchecked Sendable {
 
     private func format(_ value: Decimal) -> String {
         let number = NSDecimalNumber(decimal: value)
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.maximumFractionDigits = 8
-        formatter.minimumFractionDigits = 0
-        formatter.minimumIntegerDigits = 1
-        formatter.numberStyle = .decimal
-        return formatter.string(from: number) ?? number.stringValue
+        return outputFormatter.string(from: number) ?? number.stringValue
     }
 }
